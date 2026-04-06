@@ -24,6 +24,7 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [mounted, setMounted] = useState(false)
 
   const router = useRouter()
   const supabase = createClient()
@@ -35,6 +36,11 @@ export default function Navbar() {
     const handleScroll = () => setIsScrolled(window.scrollY > 20)
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+ useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 0)
+    return () => clearTimeout(timer)
   }, [])
 
   useEffect(() => {
@@ -189,14 +195,15 @@ export default function Navbar() {
               style={{ color: 'var(--navy)' }}
             >
               <Heart size={17} />
-              {wishlistItems.length > 0 && (
-                <span
-                  className="absolute top-1.5 right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center text-white"
-                  style={{ backgroundColor: 'var(--gold)', fontSize: '8px', fontFamily: 'Jost, sans-serif' }}
-                >
-                  {wishlistItems.length}
-                </span>
-              )}
+                {mounted && wishlistItems.length > 0 &&(
+                  <span
+                    suppressHydrationWarning
+                    className="absolute top-1.5 right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center text-white"
+                    style={{ backgroundColor: 'var(--gold)', fontSize: '8px', fontFamily: 'Jost, sans-serif' }}
+                  >
+                    {wishlistItems.length}
+                  </span>
+                )}
             </Link>
 
             <button
@@ -205,8 +212,9 @@ export default function Navbar() {
               style={{ color: 'var(--navy)' }}
             >
               <ShoppingBag size={17} />
-              {totalItems > 0 && (
+              {mounted && totalItems > 0 &&(
                 <span
+                  suppressHydrationWarning
                   className="absolute top-1.5 right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center text-white"
                   style={{ backgroundColor: 'var(--gold)', fontSize: '8px', fontFamily: 'Jost, sans-serif' }}
                 >
