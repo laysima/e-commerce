@@ -2,7 +2,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { formatPrice } from '@/lib/utils'
-import { Plus, ShoppingBag } from 'lucide-react'
+import { Plus, ShoppingBag, Pencil } from 'lucide-react'
+import DeleteProductButton from '@/components/admin/DeleteProductButton'
 
 export default async function AdminProductsPage() {
   const supabase = await createClient()
@@ -48,7 +49,7 @@ export default async function AdminProductsPage() {
         </Link>
       </div>
 
-      {/* Products Table */}
+      {/* Table */}
       <div
         style={{
           backgroundColor: 'var(--white)',
@@ -59,17 +60,13 @@ export default async function AdminProductsPage() {
         <div
           className="grid px-6 py-3"
           style={{
-            gridTemplateColumns: '2.5fr 1fr 1fr 1fr 80px',
+            gridTemplateColumns: '2fr 1fr 1fr 1fr 90px 70px',
             borderBottom: '1px solid var(--gray-100)',
             backgroundColor: 'var(--cream)',
           }}
         >
-          {['Product', 'Category', 'Price', 'Stock', 'Status'].map(h => (
-            <p
-              key={h}
-              className="eyebrow"
-              style={{ fontSize: '0.58rem' }}
-            >
+          {['Product', 'Category', 'Price', 'Stock', 'Status', ''].map((h, i) => (
+            <p key={i} className="eyebrow" style={{ fontSize: '0.58rem' }}>
               {h}
             </p>
           ))}
@@ -81,7 +78,7 @@ export default async function AdminProductsPage() {
             <div
               key={product.id}
               className="grid items-center px-6 py-4"
-              style={{ gridTemplateColumns: '2.5fr 1fr 1fr 1fr 80px' }}
+              style={{ gridTemplateColumns: '2.5fr 1fr 1fr 1fr 80px 80px' }}
             >
               {/* Product */}
               <div className="flex items-center gap-3">
@@ -198,6 +195,19 @@ export default async function AdminProductsPage() {
                 >
                   {product.is_active ? 'Active' : 'Hidden'}
                 </span>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-3">
+                <Link
+                  href={`/admin/products/${product.id}`}
+                  className="transition-opacity hover:opacity-60"
+                  style={{ color: 'var(--gray-400)' }}
+                  aria-label="Edit product"
+                >
+                  <Pencil size={14} />
+                </Link>
+                <DeleteProductButton id={product.id} name={product.name} />
               </div>
             </div>
           ))}
