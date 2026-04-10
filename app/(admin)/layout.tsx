@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { LayoutDashboard, Package, ShoppingBag, LogOut } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingBag, LogOut,Megaphone } from 'lucide-react'
+
 
 export default async function AdminLayout({
   children,
@@ -21,11 +22,12 @@ export default async function AdminLayout({
 
   if (profile?.role !== 'admin') redirect('/')
 
-  const navLinks = [
-    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/admin/products', label: 'Products', icon: Package },
-    { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
-  ]
+const navLinks = [
+  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/products', label: 'Products', icon: Package },
+  { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
+  { href: '/admin/announcements', label: 'Announcements', icon: Megaphone },
+]
 
   return (
     <div

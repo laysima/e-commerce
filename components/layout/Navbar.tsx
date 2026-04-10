@@ -67,30 +67,35 @@ export default function Navbar() {
     }
   }
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    setProfile(null)
-    setIsUserMenuOpen(false)
-    router.push('/')
-    router.refresh()
+const handleSignOut = async () => {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (user) {
+    await supabase
+      .from('profiles')
+      .update({
+        cart_data: useCartStore.getState().items,
+        wishlist_data: useWishlistStore.getState().items,
+      })
+      .eq('id', user.id)
   }
+
+  await supabase.auth.signOut()
+  setProfile(null)
+  setIsUserMenuOpen(false)
+
+  // Clear stores and any old localStorage keys
+  useCartStore.getState().clearCart()
+  useWishlistStore.setState({ items: [] })
+  localStorage.removeItem('cart-storage')
+  localStorage.removeItem('wishlist-storage')
+
+  router.push('/')
+  router.refresh()
+}
 
   return (
     <>
-      {/* Announcement Bar */}
-      <div
-        className="text-center py-2.5"
-        style={{
-          backgroundColor: 'var(--navy)',
-          color: 'var(--gold-light)',
-          fontFamily: 'Jost, sans-serif',
-          fontSize: '0.65rem',
-          letterSpacing: '0.2em',
-          fontWeight: 400,
-        }}
-      >
-        COMPLIMENTARY SHIPPING ON ORDERS OVER $150 · FREE RETURNS
-      </div>
 
       {/* Main Navbar */}
       <header
