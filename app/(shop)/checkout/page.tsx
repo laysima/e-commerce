@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -11,7 +12,6 @@ import {
   useStripe,
   useElements,
 } from '@stripe/react-stripe-js'
-import { Loader2, ShoppingBag } from 'lucide-react'
 import { useCartStore } from '@/store/cartStore'
 import { formatPrice } from '@/lib/utils'
 import { checkoutSchema, type CheckoutInput } from '@/lib/validations/checkout'
@@ -23,11 +23,9 @@ const stripePromise = loadStripe(
 
 // ── Inner form that uses Stripe hooks ──
 function CheckoutForm({
-  clientSecret,
   total,
   onSuccess,
 }: {
-  clientSecret: string
   total: number
   onSuccess: () => void
 }) {
@@ -59,7 +57,7 @@ function CheckoutForm({
   }
 
   return (
-    <div>
+    <div className="checkout-payment">
       <PaymentElement />
 
       {error && (
@@ -92,11 +90,7 @@ function CheckoutForm({
           padding: '16px',
         }}
       >
-        {isProcessing ? (
-          <><Loader2 size={14} className="animate-spin" /> Processing...</>
-        ) : (
-          `Pay ${formatPrice(total)}`
-        )}
+        {isProcessing ? 'Processing payment…' : `Pay ${formatPrice(total)}`}
       </button>
     </div>
   )
@@ -156,11 +150,8 @@ export default function CheckoutPage() {
   // Empty cart
   if (items.length === 0 && !orderComplete) {
     return (
-      <div
-        className="min-h-screen flex flex-col items-center justify-center px-6 text-center"
-        style={{ backgroundColor: 'var(--white)' }}
-      >
-        <ShoppingBag size={32} style={{ color: 'var(--gray-200)', marginBottom: '1.5rem' }} />
+      <div className="checkout-state">
+        <p className="eyebrow">Checkout</p>
         <h2
           style={{
             fontFamily: 'Playfair Display, serif',
@@ -196,16 +187,8 @@ export default function CheckoutPage() {
   // Order complete
   if (orderComplete) {
     return (
-      <div
-        className="min-h-screen flex flex-col items-center justify-center px-6 text-center"
-        style={{ backgroundColor: 'var(--white)' }}
-      >
-        <div
-          className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
-          style={{ backgroundColor: 'rgba(184,149,74,0.1)' }}
-        >
-          <span style={{ color: 'var(--gold)', fontSize: '1.5rem' }}>✓</span>
-        </div>
+      <div className="checkout-state">
+        <p className="eyebrow">Thank you</p>
         <h2
           style={{
             fontFamily: 'Playfair Display, serif',
@@ -232,16 +215,10 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div style={{ backgroundColor: 'var(--white)', minHeight: '100vh' }}>
+    <div className="checkout-page">
 
       {/* Header */}
-      <div
-        style={{
-          borderBottom: '1px solid var(--gray-100)',
-          backgroundColor: 'var(--cream)',
-          padding: '4rem 0 3rem',
-        }}
-      >
+      <div className="checkout-page__header">
         <div className="max-w-screen-xl mx-auto px-6 lg:px-12">
           <p className="eyebrow mb-3">Secure Checkout</p>
           <h1
@@ -257,11 +234,11 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      <div className="max-w-screen-xl mx-auto px-6 lg:px-12 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+      <div className="checkout-main">
+        <div className="checkout-layout">
 
           {/* ── Left — Address + Payment ── */}
-          <div>
+          <div className="checkout-form-column">
             {!clientSecret ? (
               <>
                 {/* Shipping Address Form */}
@@ -585,11 +562,7 @@ export default function CheckoutPage() {
                         marginTop: '8px',
                       }}
                     >
-                      {isLoading ? (
-                        <><Loader2 size={14} className="animate-spin" /> Loading...</>
-                      ) : (
-                        'Continue to Payment'
-                      )}
+                      {isLoading ? 'Preparing payment…' : 'Continue to Payment'}
                     </button>
                   </div>
                 </div>
@@ -615,7 +588,6 @@ export default function CheckoutPage() {
                   }}
                 >
                   <CheckoutForm
-                    clientSecret={clientSecret}
                     total={total}
                     onSuccess={handleOrderSuccess}
                   />
@@ -640,7 +612,7 @@ export default function CheckoutPage() {
           </div>
 
           {/* ── Right — Order Summary ── */}
-          <div>
+          <div className="checkout-summary">
             <p className="eyebrow mb-6">Order Summary</p>
 
             {/* Items */}
@@ -659,14 +631,16 @@ export default function CheckoutPage() {
                     }}
                   >
                     {item.product.images?.[0] && (
-                      <img
+                      <Image
                         src={item.product.images[0]}
                         alt={item.product.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        fill
+                        sizes="56px"
+                        style={{ objectFit: 'cover' }}
                       />
                     )}
                     <span
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-white"
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 flex items-center justify-center text-white"
                       style={{
                         backgroundColor: 'var(--navy)',
                         fontFamily: 'Jost, sans-serif',
@@ -743,13 +717,12 @@ export default function CheckoutPage() {
 
             {/* Trust badges */}
             <div
-              className="mt-8 p-5 space-y-3"
-              style={{ backgroundColor: 'var(--cream)', border: '1px solid var(--gray-100)' }}
+              className="checkout-notes"
             >
               {[
-                '🔒 256-bit SSL encrypted checkout',
-                '↩ Free returns within 30 days',
-                '✦ Authenticity guaranteed',
+                '256-bit SSL encrypted checkout',
+                'Free returns within 30 days',
+                'Authenticity guaranteed',
               ].map(item => (
                 <p
                   key={item}

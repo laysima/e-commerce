@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Trash2, Loader2, X } from 'lucide-react'
 
 export default function DeleteProductButton({ id, name }: { id: string, name: string }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -27,7 +26,7 @@ export default function DeleteProductButton({ id, name }: { id: string, name: st
         style={{ color: 'var(--gray-300)' }}
         aria-label="Delete product"
       >
-        <Trash2 size={14} />
+        <span style={{ fontSize: '0.68rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Delete</span>
       </button>
 
       {/* Modal */}
@@ -50,17 +49,10 @@ export default function DeleteProductButton({ id, name }: { id: string, name: st
               onClick={() => setIsOpen(false)}
               className="absolute top-4 right-4 transition-opacity hover:opacity-50"
               style={{ color: 'var(--gray-400)' }}
+              aria-label="Close delete confirmation"
             >
-              <X size={16} />
+              Close
             </button>
-
-            {/* Icon */}
-            <div
-              className="w-12 h-12 flex items-center justify-center mb-6"
-              style={{ backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}
-            >
-              <Trash2 size={18} style={{ color: '#EF4444' }} />
-            </div>
 
             {/* Text */}
             <h3
@@ -108,11 +100,7 @@ export default function DeleteProductButton({ id, name }: { id: string, name: st
                   padding: '13px',
                 }}
               >
-                {isLoading ? (
-                  <><Loader2 size={13} className="animate-spin" /> Deleting...</>
-                ) : (
-                  'Delete Product'
-                )}
+                {isLoading ? 'Deleting…' : 'Delete Product'}
               </button>
               <button
                 onClick={() => setIsOpen(false)}

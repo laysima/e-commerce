@@ -1,11 +1,11 @@
-import { notFound } from 'next/navigation'
 import Image from 'next/image'
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { formatPrice } from '@/lib/utils'
 import AddToCartButton from '@/components/shop/AddToCartButton'
 import WishlistButton from '@/components/shop/WishlistButton'
-import type { Product, ProductVariant } from '@/types'
-import Link from 'next/link'
+import type { Category, Product, ProductVariant } from '@/types'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -20,17 +20,12 @@ export async function generateMetadata({ params }: PageProps) {
     .eq('slug', slug)
     .single()
 
-  if (!product) return {}
-  return {
-    title: product.name,
-    description: product.description,
-  }
+  return product ? { title: product.name, description: product.description } : {}
 }
 
 export default async function ProductDetailPage({ params }: PageProps) {
   const { slug } = await params
   const supabase = await createClient()
-
   const { data: product } = await supabase
     .from('products')
     .select('*, category:categories(name, slug), variants:product_variants(*)')
@@ -39,326 +34,82 @@ export default async function ProductDetailPage({ params }: PageProps) {
     .single()
 
   if (!product) notFound()
-
-  const p = product as Product & { variants: ProductVariant[] }
+  const item = product as Product & { variants: ProductVariant[] }
+  const category = item.category as Category | null
+  const inventoryCopy = item.inventory_count > 10
+    ? 'In stock and ready to dispatch'
+    : item.inventory_count > 0
+      ? `Only ${item.inventory_count} remaining`
+      : 'Currently unavailable'
 
   return (
-    <div style={{ backgroundColor: 'var(--white)', minHeight: '100vh' }}>
-      <div className="max-w-screen-xl mx-auto px-6 lg:px-12 py-12">
+    <div className="product-page">
+      <nav className="product-breadcrumb" aria-label="Breadcrumb">
+        <Link href="/">Home</Link><span>/</span>
+        <Link href="/products">Collection</Link><span>/</span>
+        {category && <><Link href={`/categories/${category.slug}`}>{category.name}</Link><span>/</span></>}
+        <p>{item.name}</p>
+      </nav>
 
-        {/* Breadcrumb */}
-        {/* Breadcrumb */}
-<nav className="flex items-center gap-2 mb-10">
-  {[
-    { label: 'Home', href: '/' },
-    { label: 'Products', href: '/products' },
-    {
-      label: (p.category as { name: string } | null)?.name ?? '',
-      href: `/categories/${(p.category as { slug: string } | null)?.slug}`,
-    },
-    { label: p.name, href: '#' },
-  ].map((crumb, i, arr) => (
-    <span key={crumb.label} className="flex items-center gap-2">
-      {i < arr.length - 1 ? (
-        <>
-          <Link
-            href={crumb.href}
-            className="transition-opacity hover:opacity-60"
-            style={{
-              fontFamily: 'Jost, sans-serif',
-              fontSize: '0.72rem',
-              fontWeight: 300,
-              color: 'var(--gray-400)',
-              letterSpacing: '0.05em',
-            }}
-          >
-            {crumb.label}
-          </Link>
-          <span style={{ color: 'var(--gray-200)', fontSize: '0.7rem' }}>/</span>
-        </>
-      ) : (
-        <span
-          style={{
-            fontFamily: 'Jost, sans-serif',
-            fontSize: '0.72rem',
-            fontWeight: 400,
-            color: 'var(--navy)',
-            letterSpacing: '0.05em',
-          }}
-        >
-          {crumb.label}
-        </span>
-      )}
-    </span>
-  ))}
-</nav>
+      <div className="product-layout">
+        <div className="product-gallery">
+          {item.images?.length ? item.images.map((image, index) => (
+            <figure className={index === 0 ? 'product-gallery__lead' : ''} key={image}>
+              <Image
+                src={image}
+                alt={`${item.name}${index ? `, view ${index + 1}` : ''}`}
+                fill
+                priority={index === 0}
+                sizes={index === 0 ? '(max-width: 900px) 100vw, 62vw' : '(max-width: 900px) 50vw, 31vw'}
+              />
+              <figcaption>{String(index + 1).padStart(2, '0')} / {String(item.images.length).padStart(2, '0')}</figcaption>
+            </figure>
+          )) : (
+            <div className="product-gallery__empty">Image forthcoming</div>
+          )}
+        </div>
 
-        {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+        <aside className="product-information">
+          <div className="product-information__topline">
+            <p>{category?.name ?? 'Cressida collection'}</p>
+            <span>{inventoryCopy}</span>
+          </div>
+          <h1>{item.name}</h1>
 
-          {/* ── Images ── */}
-          <div className="space-y-3">
-            {/* Main Image */}
-            <div
-              className="relative img-zoom"
-              style={{ aspectRatio: '3/4', backgroundColor: 'var(--gray-50)' }}
-            >
-              {p.images?.[0] ? (
-                <Image
-                  src={p.images[0]}
-                  alt={p.name}
-                  fill
-                  className="object-cover"
-                  priority
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <span style={{ color: 'var(--gray-200)', fontFamily: 'Jost, sans-serif', fontSize: '0.8rem' }}>
-                    No image
+          <div className="product-price">
+            <p>{formatPrice(item.price)}</p>
+            {item.compare_at_price && <s>{formatPrice(item.compare_at_price)}</s>}
+            {item.compare_at_price && (
+              <span>{Math.round(((item.compare_at_price - item.price) / item.compare_at_price) * 100)}% reduction</span>
+            )}
+          </div>
+
+          <p className="product-description">{item.description}</p>
+
+          {item.variants?.length > 0 && (
+            <div className="product-variants">
+              <p>{item.variants[0]?.name}</p>
+              <div>
+                {item.variants.map(variant => (
+                  <span className={variant.inventory_count === 0 ? 'is-unavailable' : ''} key={variant.id}>
+                    {variant.value}
                   </span>
-                </div>
-              )}
-
-              {/* Sale badge */}
-              {p.compare_at_price && (
-                <span
-                  style={{
-                    position: 'absolute',
-                    top: '16px',
-                    left: '16px',
-                    backgroundColor: 'var(--navy)',
-                    color: 'var(--gold-light)',
-                    fontFamily: 'Jost, sans-serif',
-                    fontSize: '0.6rem',
-                    fontWeight: 500,
-                    letterSpacing: '0.15em',
-                    textTransform: 'uppercase',
-                    padding: '5px 12px',
-                  }}
-                >
-                  Sale
-                </span>
-              )}
-            </div>
-
-            {/* Thumbnail Row */}
-            {p.images && p.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
-                {p.images.slice(1).map((img, i) => (
-                  <div
-                    key={i}
-                    className="relative"
-                    style={{ aspectRatio: '1/1', backgroundColor: 'var(--gray-50)' }}
-                  >
-                    <Image
-                      src={img}
-                      alt={`${p.name} ${i + 2}`}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
                 ))}
               </div>
-            )}
+            </div>
+          )}
+
+          <div className="product-actions">
+            <AddToCartButton product={item} />
+            <WishlistButton product={item} />
           </div>
 
-          {/* ── Product Info ── */}
-          <div className="lg:py-4">
-
-            {/* Category */}
-            <p className="eyebrow mb-3">
-              {(p.category as { name: string } | null)?.name}
-            </p>
-
-            {/* Name */}
-            <h1
-              style={{
-                fontFamily: 'Playfair Display, serif',
-                fontWeight: 400,
-                fontSize: 'clamp(1.8rem, 3vw, 2.6rem)',
-                color: 'var(--navy)',
-                letterSpacing: '-0.01em',
-                lineHeight: 1.15,
-                marginBottom: '1.25rem',
-              }}
-            >
-              {p.name}
-            </h1>
-
-            {/* Price */}
-            <div className="flex items-center gap-4 mb-8">
-              <span
-                style={{
-                  fontFamily: 'Jost, sans-serif',
-                  fontWeight: 400,
-                  fontSize: '1.4rem',
-                  color: 'var(--navy)',
-                  letterSpacing: '0.02em',
-                }}
-              >
-                {formatPrice(p.price)}
-              </span>
-              {p.compare_at_price && (
-                <span
-                  style={{
-                    fontFamily: 'Jost, sans-serif',
-                    fontWeight: 300,
-                    fontSize: '1.1rem',
-                    color: 'var(--gray-300)',
-                    textDecoration: 'line-through',
-                  }}
-                >
-                  {formatPrice(p.compare_at_price)}
-                </span>
-              )}
-              {p.compare_at_price && (
-                <span
-                  style={{
-                    fontFamily: 'Jost, sans-serif',
-                    fontSize: '0.72rem',
-                    fontWeight: 500,
-                    color: 'var(--gold)',
-                    letterSpacing: '0.1em',
-                  }}
-                >
-                  {Math.round(((p.compare_at_price - p.price) / p.compare_at_price) * 100)}% off
-                </span>
-              )}
-            </div>
-
-            {/* Divider */}
-            <div className="gold-divider mb-8" />
-
-            {/* Description */}
-            <p
-              style={{
-                fontFamily: 'Jost, sans-serif',
-                fontWeight: 300,
-                fontSize: '0.92rem',
-                color: 'var(--gray-600)',
-                lineHeight: 1.85,
-                marginBottom: '2rem',
-              }}
-            >
-              {p.description}
-            </p>
-
-            {/* Variants */}
-            {p.variants && p.variants.length > 0 && (
-              <div className="mb-8">
-                <p
-                  style={{
-                    fontFamily: 'Jost, sans-serif',
-                    fontSize: '0.7rem',
-                    fontWeight: 500,
-                    letterSpacing: '0.15em',
-                    textTransform: 'uppercase',
-                    color: 'var(--gray-600)',
-                    marginBottom: '12px',
-                  }}
-                >
-                  {p.variants[0]?.name}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {p.variants.map(variant => (
-                    <div
-                      key={variant.id}
-                      style={{
-                        border: '1px solid var(--gray-200)',
-                        padding: '8px 16px',
-                        fontFamily: 'Jost, sans-serif',
-                        fontSize: '0.8rem',
-                        fontWeight: 300,
-                        color: variant.inventory_count === 0
-                          ? 'var(--gray-200)'
-                          : 'var(--navy)',
-                        cursor: variant.inventory_count === 0 ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.2s ease',
-                        textDecoration: variant.inventory_count === 0
-                          ? 'line-through'
-                          : 'none',
-                      }}
-                    >
-                      {variant.value}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Stock indicator */}
-            <div className="flex items-center gap-2 mb-8">
-              <div
-                style={{
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  backgroundColor: p.inventory_count > 0 ? '#4CAF50' : '#E57373',
-                  flexShrink: 0,
-                }}
-              />
-              <p
-                style={{
-                  fontFamily: 'Jost, sans-serif',
-                  fontSize: '0.78rem',
-                  fontWeight: 300,
-                  color: 'var(--gray-400)',
-                  letterSpacing: '0.03em',
-                }}
-              >
-                {p.inventory_count > 10
-                  ? 'In stock'
-                  : p.inventory_count > 0
-                  ? `Only ${p.inventory_count} left`
-                  : 'Out of stock'}
-              </p>
-            </div>
-
-            {/* Add to Cart + Wishlist */}
-            <div className="flex gap-3 mb-10">
-              <AddToCartButton product={p} />
-              <WishlistButton product={p} />
-            </div>
-
-            {/* Divider */}
-            <div className="gold-divider mb-8" />
-
-            {/* Details */}
-            <div className="space-y-4">
-              {[
-                { label: 'Complimentary Shipping', value: 'On all orders over $150' },
-                { label: 'Free Returns', value: 'Within 30 days of purchase' },
-                { label: 'Authenticity', value: 'All pieces are verified authentic' },
-              ].map(detail => (
-                <div key={detail.label} className="flex gap-4">
-                  <p
-                    style={{
-                      fontFamily: 'Jost, sans-serif',
-                      fontSize: '0.75rem',
-                      fontWeight: 500,
-                      letterSpacing: '0.1em',
-                      textTransform: 'uppercase',
-                      color: 'var(--navy)',
-                      minWidth: '160px',
-                    }}
-                  >
-                    {detail.label}
-                  </p>
-                  <p
-                    style={{
-                      fontFamily: 'Jost, sans-serif',
-                      fontSize: '0.82rem',
-                      fontWeight: 300,
-                      color: 'var(--gray-400)',
-                    }}
-                  >
-                    {detail.value}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+          <dl className="product-service-notes">
+            <div><dt>Delivery</dt><dd>Complimentary on orders over $150</dd></div>
+            <div><dt>Returns</dt><dd>Free within 30 days of purchase</dd></div>
+            <div><dt>Care</dt><dd>Product-specific guidance included</dd></div>
+          </dl>
+        </aside>
       </div>
     </div>
   )

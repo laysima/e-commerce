@@ -3,11 +3,11 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: {
-    default: 'Cressida — Modern E-Commerce',
-    template: '%s | Cressida',  // e.g. "Wireless Headphones | Cressida"
+    default: 'Cressida — A Considered Wardrobe',
+    template: '%s | Cressida',
   },
-  description: 'Discover thousands of products across every category.',
-  keywords: ['ecommerce', 'shop', 'online store', 'shopping'],
+  description: 'Contemporary clothing and footwear selected for texture, proportion, and permanence.',
+  keywords: ['contemporary clothing', 'footwear', 'apparel', 'Cressida'],
   openGraph: {
     type: 'website',
     locale: 'en_US',

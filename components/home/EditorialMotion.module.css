@@ -1,0 +1,608 @@
+.foldText {
+  display: block;
+  margin: 0;
+  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
+  line-height: 0.88;
+  letter-spacing: -0.065em;
+  text-wrap: balance;
+}
+
+.foldPiece {
+  display: inline-block;
+  opacity: 0;
+  transform: rotateX(-98deg) translateY(0.22em);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+.foldVisible .foldPiece {
+  animation-name: fold-open;
+  animation-fill-mode: forwards;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes fold-open {
+  0% {
+    opacity: 0;
+    transform: rotateX(-98deg) translateY(0.22em);
+    text-shadow: 0 0.18em 0.16em rgba(0, 0, 0, var(--fold-shadow));
+  }
+  100% {
+    opacity: 1;
+    transform: rotateX(0) translateY(0);
+    text-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  }
+}
+
+.driftWall {
+  --drift-x: 0px;
+  --drift-y: 0px;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 520px;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--overlay);
+}
+
+.driftPlane {
+  position: absolute;
+  inset: -80% -35%;
+  display: flex;
+  justify-content: center;
+  gap: var(--tile-gap);
+  transform-style: preserve-3d;
+  transition: transform 700ms cubic-bezier(0.2, 0.75, 0.2, 1);
+  will-change: transform;
+}
+
+.driftColumn {
+  width: var(--tile-w);
+  flex: 0 0 var(--tile-w);
+  display: flex;
+  flex-direction: column;
+  gap: var(--tile-gap);
+  animation: drift-up linear infinite;
+  will-change: transform;
+}
+
+.driftDown {
+  animation-name: drift-down;
+}
+
+.driftTile {
+  position: relative;
+  display: block;
+  width: var(--tile-w);
+  height: var(--tile-h);
+  overflow: hidden;
+  background: #242320;
+  color: #fff;
+}
+
+.driftImage {
+  object-fit: cover;
+  filter: saturate(0.72) contrast(1.04);
+  transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1), filter 500ms ease;
+}
+
+.driftPlaceholder {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #393732, #1e1d1a);
+}
+
+.driftTile span {
+  position: absolute;
+  inset: auto 12px 10px;
+  z-index: 1;
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 300ms ease, transform 300ms ease;
+}
+
+.driftTile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent 55%, rgba(0, 0, 0, 0.72));
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.driftTile:hover .driftImage {
+  transform: scale(1.04);
+  filter: saturate(0.95) contrast(1.02);
+}
+
+.driftTile:hover span,
+.driftTile:hover::after {
+  opacity: 1;
+}
+
+.driftTile:hover span {
+  transform: translateY(0);
+}
+
+.driftOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background:
+    linear-gradient(to bottom, var(--overlay), transparent 25%, transparent 72%, var(--overlay)),
+    radial-gradient(circle at 50% 45%, transparent 5%, color-mix(in srgb, var(--overlay) 58%, transparent) 96%);
+  opacity: var(--fade);
+}
+
+@keyframes drift-up {
+  from { transform: translateY(0); }
+  to { transform: translateY(var(--cycle-offset)); }
+}
+
+@keyframes drift-down {
+  from { transform: translateY(var(--cycle-offset)); }
+  to { transform: translateY(0); }
+}
+
+.maskedHeading {
+  --mask-y: 0px;
+  position: relative;
+  overflow: hidden;
+}
+
+.maskedHeading > span {
+  display: block;
+  padding-block: 0.08em 0.16em;
+  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
+  font-size: clamp(4.6rem, 14.2vw, 13.4rem);
+  font-weight: 500;
+  line-height: 0.78;
+  letter-spacing: -0.075em;
+  text-align: center;
+  color: transparent;
+  background-image: var(--masked-src);
+  background-position: center calc(50% + var(--mask-y));
+  background-size: var(--fill-size) auto;
+  background-repeat: no-repeat;
+  background-clip: text;
+  -webkit-background-clip: text;
+  filter: saturate(0.6) contrast(1.08);
+}
+
+.maskedwipe > span {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 1.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.maskedfade > span {
+  opacity: 0;
+  transform: translateY(0.12em);
+  transition: opacity 1s ease, transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.maskedHeading[data-visible='true'] > span {
+  clip-path: inset(0);
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.maskedVideo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.pixelSwap {
+  position: relative;
+  min-height: 420px;
+  overflow: hidden;
+  cursor: pointer;
+  outline: none;
+  isolation: isolate;
+}
+
+.pixelFirst,
+.pixelSecond {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  transition: opacity var(--content-duration) ease, transform var(--swap-duration) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pixelSecond {
+  opacity: 0;
+  transform: scale(1.035);
+}
+
+.pixelSwapped .pixelFirst {
+  opacity: 0;
+  transform: scale(0.985);
+}
+
+.pixelSwapped .pixelSecond {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.pixelGrid {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  gap: var(--pixel-gap);
+  pointer-events: none;
+}
+
+.pixelGrid span {
+  background: #a44b36;
+  border-radius: var(--pixel-radius);
+  opacity: 0;
+  transform: scale(var(--pixel-scale)) rotate(var(--pixel-spin));
+  transition:
+    opacity var(--pixel-duration) ease,
+    transform var(--pixel-duration) cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.pixelSwapped .pixelGrid span {
+  animation: pixel-flash var(--pixel-duration) ease both;
+}
+
+.pixelFade .pixelGrid span {
+  mix-blend-mode: multiply;
+}
+
+.pixelSwap:focus-visible {
+  box-shadow: inset 0 0 0 2px currentColor;
+}
+
+@keyframes pixel-flash {
+  0%, 100% { opacity: 0; transform: scale(var(--pixel-scale)) rotate(var(--pixel-spin)); }
+  45% { opacity: 0.88; transform: scale(1) rotate(0); }
+}
+
+.scrollExpand {
+  --expand-progress: 0;
+  --expand-width: 72vw;
+  --expand-height: 62vh;
+  --expand-scale: 1.15;
+  --title-shift: 0vh;
+  --hint-opacity: 1;
+  --copy-opacity: 0;
+  --copy-shift: 28px;
+  position: relative;
+  height: 190vh;
+  background: #171714;
+}
+
+.scrollSticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.scrollFrame {
+  position: relative;
+  width: var(--expand-width);
+  height: var(--expand-height);
+  overflow: hidden;
+  color: #f4f0e8;
+}
+
+.scrollImage {
+  object-fit: cover;
+  object-position: center;
+  transform: scale(var(--expand-scale));
+  filter: saturate(0.72) contrast(1.03);
+}
+
+.scrollShade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(15, 15, 13, 0.08), rgba(15, 15, 13, 0.72));
+}
+
+.scrollTitle {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 90%;
+  transform: translate(-50%, calc(-50% + var(--title-shift)));
+  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
+  font-size: clamp(3.4rem, 10vw, 9rem);
+  line-height: 0.88;
+  letter-spacing: -0.06em;
+  text-align: center;
+  mix-blend-mode: difference;
+}
+
+.scrollHint {
+  position: absolute;
+  top: 26px;
+  left: 28px;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: var(--hint-opacity);
+}
+
+.scrollCopy {
+  position: absolute;
+  left: clamp(24px, 7vw, 110px);
+  bottom: clamp(30px, 7vh, 92px);
+  width: min(470px, 74vw);
+  opacity: var(--copy-opacity);
+  transform: translateY(var(--copy-shift));
+}
+
+.scrollCopy h2 {
+  margin-bottom: 14px;
+  font-size: clamp(1.8rem, 3vw, 3rem);
+  font-weight: 400;
+}
+
+.scrollCopy p {
+  max-width: 42ch;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.92rem;
+}
+
+.textLoop {
+  width: min(440px, 86vw);
+  color: var(--loop-color);
+}
+
+.textLoop svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+  animation: loop-breathe var(--loop-duration) ease-in-out infinite alternate;
+  animation-direction: var(--loop-direction);
+}
+
+.textLoop text {
+  fill: currentColor;
+  font-family: var(--font-sans, 'Jost', sans-serif);
+}
+
+.ribbonPath {
+  fill: none;
+  stroke: var(--ribbon-color);
+  stroke-width: var(--ribbon-width);
+  stroke-linecap: round;
+}
+
+.loopPause:hover svg {
+  animation-play-state: paused;
+}
+
+@keyframes loop-breathe {
+  from { transform: translateX(-1.5%); }
+  to { transform: translateX(1.5%); }
+}
+
+.borderGlow {
+  --glow-x: 50%;
+  --glow-y: 50%;
+  position: relative;
+  background: var(--glow-bg);
+  isolation: isolate;
+}
+
+.borderGlow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  padding: 1px;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle var(--glow-radius) at var(--glow-x) var(--glow-y), rgba(var(--glow-color) / var(--glow-intensity)), transparent 75%),
+    var(--glow-gradient);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0.72;
+}
+
+.glowAnimated::before {
+  animation: glow-cycle 5s linear infinite;
+}
+
+@keyframes glow-cycle {
+  to { filter: hue-rotate(360deg); }
+}
+
+.cardSwap {
+  position: relative;
+  width: min(560px, 82vw);
+  height: 600px;
+}
+
+.cardSlot {
+  position: absolute;
+  inset: 0;
+  transform: translate3d(var(--card-x), var(--card-y), 0) scale(var(--card-scale));
+  transform-origin: left top;
+  transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1), opacity 500ms ease;
+}
+
+.swapCard {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #26251f;
+  color: #f5f1e9;
+}
+
+.cardCount {
+  position: absolute;
+  z-index: 20;
+  right: -75px;
+  bottom: -88px;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  color: rgba(255, 255, 255, 0.56);
+}
+
+.curvedLoop {
+  width: 100%;
+  overflow: hidden;
+  user-select: none;
+}
+
+.curvedLoop svg {
+  width: 112%;
+  height: auto;
+  margin-left: -6%;
+  overflow: visible;
+}
+
+.curvedLoop text {
+  fill: currentColor;
+  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
+  font-size: 76px;
+  font-style: italic;
+  letter-spacing: -0.035em;
+}
+
+.curveInteractive:hover text {
+  fill: #a44b36;
+}
+
+.trueFocus {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.08em 0.24em;
+  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
+  font-size: clamp(3.4rem, 9vw, 8.6rem);
+  line-height: 0.92;
+  letter-spacing: -0.06em;
+}
+
+.trueFocus button {
+  position: relative;
+  color: inherit;
+  cursor: default;
+  filter: blur(var(--blur));
+  opacity: 0.35;
+  transition: filter var(--focus-duration) ease, opacity var(--focus-duration) ease;
+}
+
+.trueFocus button::after {
+  content: '';
+  position: absolute;
+  left: 0.04em;
+  right: 0.04em;
+  bottom: -0.06em;
+  height: 2px;
+  background: var(--focus-color);
+  transform: scaleX(0);
+  transition: transform var(--focus-duration) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.trueFocus .focusActive {
+  filter: blur(0);
+  opacity: 1;
+}
+
+.trueFocus .focusActive::after {
+  transform: scaleX(1);
+}
+
+@media (max-width: 900px) {
+  .driftPlane {
+    inset: -65% -120%;
+  }
+
+  .cardSwap {
+    width: min(76vw, 500px);
+    height: 520px;
+  }
+
+  .cardCount {
+    right: -42px;
+  }
+}
+
+@media (max-width: 640px) {
+  .driftWall {
+    min-height: 470px;
+  }
+
+  .driftPlane {
+    inset: -45% -210%;
+  }
+
+  .maskedHeading > span {
+    font-size: clamp(3.2rem, 18vw, 6rem);
+    line-height: 0.86;
+  }
+
+  .pixelSwap {
+    min-height: 360px;
+  }
+
+  .scrollExpand {
+    height: 170vh;
+  }
+
+  .scrollImage {
+    object-position: 63% center;
+  }
+
+  .cardSwap {
+    width: 78vw;
+    height: 430px;
+  }
+
+  .cardCount {
+    right: 0;
+    bottom: -82px;
+  }
+
+  .curvedLoop svg {
+    width: 190%;
+    margin-left: -45%;
+  }
+
+  .curvedLoop text {
+    font-size: 88px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .foldPiece,
+  .foldVisible .foldPiece {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .driftColumn,
+  .textLoop svg,
+  .glowAnimated::before {
+    animation-play-state: paused;
+  }
+
+  .cardSlot,
+  .scrollImage,
+  .trueFocus button,
+  .maskedHeading > span {
+    transition-duration: 0.01ms;
+  }
+}

@@ -1,6 +1,6 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { formatPrice } from '@/lib/utils'
-import { ShoppingBag, Package, Users, TrendingUp } from 'lucide-react'
 
 type RecentOrder = {
   id: string
@@ -12,6 +12,8 @@ type RecentOrder = {
   } | null
 }
 
+const LOW_STOCK_THRESHOLD = 15
+
 export default async function AdminDashboard() {
   const supabase = await createClient()
 
@@ -22,6 +24,7 @@ export default async function AdminDashboard() {
     { count: totalUsers },
     { data: recentOrders },
     { data: revenue },
+    { data: lowStockProducts },
   ] = await Promise.all([
     supabase.from('orders').select('*', { count: 'exact', head: true }),
     supabase.from('products').select('*', { count: 'exact', head: true }),
@@ -35,6 +38,12 @@ export default async function AdminDashboard() {
       .from('orders')
       .select('total')
       .eq('status', 'delivered'),
+    supabase
+      .from('products')
+      .select('id, name, slug, inventory_count')
+      .eq('is_active', true)
+      .lt('inventory_count', LOW_STOCK_THRESHOLD)
+      .order('inventory_count', { ascending: true }),
   ])
 
   const totalRevenue = revenue?.reduce((sum, o) => sum + o.total, 0) ?? 0
@@ -43,25 +52,21 @@ export default async function AdminDashboard() {
     {
       label: 'Total Revenue',
       value: formatPrice(totalRevenue),
-      icon: TrendingUp,
       sub: 'From delivered orders',
     },
     {
       label: 'Total Orders',
       value: totalOrders ?? 0,
-      icon: ShoppingBag,
       sub: 'All time',
     },
     {
       label: 'Products',
       value: totalProducts ?? 0,
-      icon: Package,
       sub: 'Active listings',
     },
     {
       label: 'Customers',
       value: totalUsers ?? 0,
-      icon: Users,
       sub: 'Registered accounts',
     },
   ]
@@ -93,24 +98,15 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
-        {stats.map(stat => (
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-0 mb-12" style={{ borderTop: '1px solid var(--gray-200)', borderBottom: '1px solid var(--gray-200)' }}>
+        {stats.map((stat, index) => (
           <div
             key={stat.label}
             className="p-6"
             style={{
-              backgroundColor: 'var(--white)',
-              border: '1px solid var(--gray-100)',
+              borderRight: index < stats.length - 1 ? '1px solid var(--gray-200)' : undefined,
             }}
           >
-            <div className="flex items-start justify-between mb-4">
-              <div
-                className="w-9 h-9 flex items-center justify-center rounded-sm"
-                style={{ backgroundColor: 'rgba(184,149,74,0.1)' }}
-              >
-                <stat.icon size={15} style={{ color: 'var(--gold)' }} />
-              </div>
-            </div>
             <p
               style={{
                 fontFamily: 'Playfair Display, serif',
@@ -150,11 +146,49 @@ export default async function AdminDashboard() {
         ))}
       </div>
 
+      {/* Low Stock */}
+      <div className="mb-12" style={{ borderTop: '1px solid var(--gray-200)', borderBottom: '1px solid var(--gray-200)' }}>
+        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid var(--gray-100)' }}>
+          <p className="eyebrow" style={{ fontSize: '0.6rem' }}>Low Stock</p>
+        </div>
+        {lowStockProducts?.length ? (
+          <div className="divide-y divide-gray-50">
+            {lowStockProducts.map(product => (
+              <Link
+                key={product.id}
+                href={`/admin/products/${product.id}`}
+                className="flex items-center justify-between px-6 py-4 transition-opacity hover:opacity-70"
+              >
+                <p style={{ fontFamily: 'Jost, sans-serif', fontSize: '0.82rem', fontWeight: 400, color: 'var(--navy)' }}>
+                  {product.name}
+                </p>
+                <p
+                  style={{
+                    fontFamily: 'Jost, sans-serif',
+                    fontSize: '0.72rem',
+                    fontWeight: 500,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: product.inventory_count === 0 ? '#EF4444' : '#F59E0B',
+                  }}
+                >
+                  {product.inventory_count === 0 ? 'Out of stock' : `${product.inventory_count} left`}
+                </p>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="px-6 py-6" style={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', fontWeight: 300, color: 'var(--gray-400)' }}>
+            Every listing is well stocked.
+          </p>
+        )}
+      </div>
+
       {/* Recent Orders */}
       <div
         style={{
-          backgroundColor: 'var(--white)',
-          border: '1px solid var(--gray-100)',
+          borderTop: '1px solid var(--gray-200)',
+          borderBottom: '1px solid var(--gray-200)',
         }}
       >
         <div

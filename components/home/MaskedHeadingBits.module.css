@@ -1,0 +1,70 @@
+.root {
+  position: relative;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  text-wrap: balance;
+  -webkit-font-smoothing: antialiased;
+}
+
+.measure {
+  color: transparent;
+}
+
+.word {
+  display: inline-block;
+  white-space: pre;
+}
+
+.word:not(:last-child)::after {
+  content: ' ';
+}
+
+.baseline {
+  display: inline-block;
+  width: 0;
+  height: 0;
+}
+
+.defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.reveal {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.clip {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.media {
+  position: absolute;
+  inset: 0;
+  display: block;
+  will-change: transform, filter;
+}
+
+.source {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .media,
+  .reveal {
+    will-change: auto;
+  }
+}

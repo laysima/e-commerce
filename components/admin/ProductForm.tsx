@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { slugify } from '@/lib/utils'
-import { Loader2, Plus, X, Upload } from 'lucide-react'
 import Image from 'next/image'
 
 type Category = {
@@ -188,7 +187,7 @@ export default function ProductForm({ categories, product }: Props) {
 
       <div
         className="p-8 space-y-6"
-        style={{ backgroundColor: 'var(--white)', border: '1px solid var(--gray-100)' }}
+        style={{ borderTop: '1px solid var(--gray-200)', borderBottom: '1px solid var(--gray-200)' }}
       >
         {/* Name */}
         <div>
@@ -292,15 +291,13 @@ export default function ProductForm({ categories, product }: Props) {
             }}
           >
             {isUploading ? (
-              <><Loader2 size={16} className="animate-spin" style={{ color: 'var(--gold)' }} />
               <span style={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', fontWeight: 300, color: 'var(--gray-400)' }}>
                 Uploading...
-              </span></>
+              </span>
             ) : (
-              <><Upload size={16} style={{ color: 'var(--gold)' }} />
               <span style={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', fontWeight: 300, color: 'var(--gray-400)' }}>
                 Click to upload from your device
-              </span></>
+              </span>
             )}
             <input
               type="file"
@@ -332,7 +329,7 @@ export default function ProductForm({ categories, product }: Props) {
                 letterSpacing: '0.1em',
               }}
             >
-              <Plus size={13} /> Add
+              Add
             </button>
           </div>
 
@@ -354,10 +351,11 @@ export default function ProductForm({ categories, product }: Props) {
                   />
                   <button
                     onClick={() => removeImage(i)}
-                    className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-1 right-1 px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity"
                     style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: 'white' }}
+                    aria-label={`Remove product image ${i + 1}`}
                   >
-                    <X size={11} />
+                    <span style={{ fontSize: '0.55rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Remove</span>
                   </button>
                   {i === 0 && (
                     <span
@@ -424,12 +422,9 @@ export default function ProductForm({ categories, product }: Props) {
               padding: '13px 28px',
             }}
           >
-            {isLoading ? (
-              <><Loader2 size={14} className="animate-spin" />
-              {isEditing ? 'Saving...' : 'Creating...'}</>
-            ) : (
-              isEditing ? 'Save Changes' : 'Create Product'
-            )}
+            {isLoading
+              ? (isEditing ? 'Saving…' : 'Creating…')
+              : (isEditing ? 'Save Changes' : 'Create Product')}
           </button>
           <button
             onClick={() => router.back()}

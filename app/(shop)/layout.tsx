@@ -2,6 +2,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import CartDrawer from '@/components/cart/CartDrawer'
 import AnnouncementBanner from '@/components/home/AnnouncementBanner'
+import AnnouncementPopup from '@/components/home/AnnouncementPopup'
 import CartSyncProvider from '@/components/layout/CartSyncProvider'
 import { createClient } from '@/lib/supabase/server'
 
@@ -12,10 +13,8 @@ export default async function ShopLayout({
 }) {
   const supabase = await createClient()
 
-  // Get current user
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Fetch active announcement
   const { data: announcement } = await supabase
     .from('announcements')
     .select('*')
@@ -26,6 +25,7 @@ export default async function ShopLayout({
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* Top banner */}
       {announcement && (
         <AnnouncementBanner
           message={announcement.message}
@@ -39,8 +39,15 @@ export default async function ShopLayout({
       </main>
       <Footer />
       <CartDrawer />
-      {/* Syncs cart + wishlist with DB for logged in users */}
       <CartSyncProvider userId={user?.id ?? null} />
+      {/* Popup — shows once per session */}
+      {announcement && (
+        <AnnouncementPopup
+          message={announcement.message}
+          linkText={announcement.link_text}
+          linkUrl={announcement.link_url}
+        />
+      )}
     </div>
   )
 }

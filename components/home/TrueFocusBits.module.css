@@ -1,0 +1,87 @@
+.container {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.08em 0.24em;
+  outline: none;
+  user-select: none;
+  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
+  font-size: clamp(3.4rem, 9vw, 8.6rem);
+  line-height: 0.92;
+  letter-spacing: -0.06em;
+}
+
+.word {
+  position: relative;
+  color: inherit;
+  cursor: default;
+  outline: none;
+  user-select: none;
+  transition: filter 300ms ease, color 300ms ease, opacity 300ms ease;
+}
+
+.word:not(.active) {
+  opacity: 0.34;
+}
+
+.word.active {
+  filter: blur(0);
+  opacity: 1;
+}
+
+.manual {
+  cursor: pointer;
+}
+
+.frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: content-box;
+  pointer-events: none;
+  border: none;
+}
+
+.corner {
+  position: absolute;
+  width: 0.24em;
+  height: 0.24em;
+  border: 2px solid var(--border-color, #fff);
+  filter: drop-shadow(0 0 4px var(--glow-color, transparent));
+}
+
+.topLeft {
+  top: -0.1em;
+  left: -0.1em;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.topRight {
+  top: -0.1em;
+  right: -0.1em;
+  border-left: 0;
+  border-bottom: 0;
+}
+
+.bottomLeft {
+  bottom: -0.1em;
+  left: -0.1em;
+  border-right: 0;
+  border-top: 0;
+}
+
+.bottomRight {
+  right: -0.1em;
+  bottom: -0.1em;
+  border-left: 0;
+  border-top: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .word {
+    transition-duration: 0.01ms !important;
+  }
+}

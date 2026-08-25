@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Plus, Trash2, Check, Loader2 } from 'lucide-react'
 
 type Announcement = {
   id: string
@@ -115,7 +114,7 @@ export default function AnnouncementManager({
       {/* Create New */}
       <div
         className="p-8"
-        style={{ backgroundColor: 'var(--white)', border: '1px solid var(--gray-100)' }}
+        style={{ borderTop: '1px solid var(--gray-200)', borderBottom: '1px solid var(--gray-200)' }}
       >
         <p className="eyebrow mb-6" style={{ fontSize: '0.6rem' }}>
           New Announcement
@@ -170,7 +169,7 @@ export default function AnnouncementManager({
           <button
             onClick={handleCreate}
             disabled={isLoading}
-            className="flex items-center gap-2 transition-opacity hover:opacity-80 disabled:opacity-40"
+            className="transition-opacity hover:opacity-80 disabled:opacity-40"
             style={{
               backgroundColor: 'var(--navy)',
               color: 'var(--cream)',
@@ -182,10 +181,7 @@ export default function AnnouncementManager({
               padding: '12px 24px',
             }}
           >
-            {isLoading
-              ? <><Loader2 size={13} className="animate-spin" /> Creating...</>
-              : <><Plus size={13} /> Create & Activate</>
-            }
+            {isLoading ? 'Creating…' : 'Create & Activate'}
           </button>
         </div>
       </div>
@@ -193,7 +189,7 @@ export default function AnnouncementManager({
       {/* Existing Announcements */}
       {announcements.length > 0 && (
         <div
-          style={{ backgroundColor: 'var(--white)', border: '1px solid var(--gray-100)' }}
+          style={{ borderTop: '1px solid var(--gray-200)', borderBottom: '1px solid var(--gray-200)' }}
         >
           <div
             className="px-6 py-4"
@@ -280,7 +276,7 @@ export default function AnnouncementManager({
                       aria-label="Set as active"
                       title="Set as active"
                     >
-                      <Check size={14} />
+                      <span style={{ fontSize: '0.62rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Activate</span>
                     </button>
                   )}
                   <button
@@ -289,7 +285,7 @@ export default function AnnouncementManager({
                     style={{ color: 'var(--gray-300)' }}
                     aria-label="Delete announcement"
                   >
-                    <Trash2 size={14} />
+                    <span style={{ fontSize: '0.62rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Delete</span>
                   </button>
                 </div>
               </div>

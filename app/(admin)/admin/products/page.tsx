@@ -2,7 +2,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { formatPrice } from '@/lib/utils'
-import { Plus, ShoppingBag, Pencil } from 'lucide-react'
 import DeleteProductButton from '@/components/admin/DeleteProductButton'
 
 export default async function AdminProductsPage() {
@@ -33,7 +32,7 @@ export default async function AdminProductsPage() {
         </div>
         <Link
           href="/admin/products/new"
-          className="flex items-center gap-2 transition-opacity hover:opacity-80"
+          className="transition-opacity hover:opacity-80"
           style={{
             backgroundColor: 'var(--navy)',
             color: 'var(--cream)',
@@ -45,22 +44,22 @@ export default async function AdminProductsPage() {
             padding: '11px 20px',
           }}
         >
-          <Plus size={13} /> Add Product
+          Add Product
         </Link>
       </div>
 
       {/* Table */}
       <div
         style={{
-          backgroundColor: 'var(--white)',
-          border: '1px solid var(--gray-100)',
+          borderTop: '1px solid var(--gray-200)',
+          borderBottom: '1px solid var(--gray-200)',
         }}
       >
         {/* Table Header */}
         <div
           className="grid px-6 py-3"
           style={{
-            gridTemplateColumns: '2fr 1fr 1fr 1fr 90px 70px',
+            gridTemplateColumns: '2.5fr 1fr 1fr 1fr 100px 90px',
             borderBottom: '1px solid var(--gray-100)',
             backgroundColor: 'var(--cream)',
           }}
@@ -78,7 +77,7 @@ export default async function AdminProductsPage() {
             <div
               key={product.id}
               className="grid items-center px-6 py-4"
-              style={{ gridTemplateColumns: '2.5fr 1fr 1fr 1fr 80px 80px' }}
+              style={{ gridTemplateColumns: '2.5fr 1fr 1fr 1fr 100px 90px' }}
             >
               {/* Product */}
               <div className="flex items-center gap-3">
@@ -102,7 +101,7 @@ export default async function AdminProductsPage() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <ShoppingBag size={14} style={{ color: 'var(--gray-200)' }} />
+                      <span style={{ color: 'var(--gray-400)', fontSize: '0.55rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>No image</span>
                     </div>
                   )}
                 </div>
@@ -203,9 +202,9 @@ export default async function AdminProductsPage() {
                   href={`/admin/products/${product.id}`}
                   className="transition-opacity hover:opacity-60"
                   style={{ color: 'var(--gray-400)' }}
-                  aria-label="Edit product"
+                  aria-label={`Edit ${product.name}`}
                 >
-                  <Pencil size={14} />
+                  <span style={{ fontSize: '0.68rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Edit</span>
                 </Link>
                 <DeleteProductButton id={product.id} name={product.name} />
               </div>

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { ShoppingBag, Check } from 'lucide-react'
 import { useCartStore } from '@/store/cartStore'
 import type { Product } from '@/types'
 
@@ -22,31 +21,10 @@ export default function AddToCartButton({ product }: { product: Product }) {
     <button
       onClick={handleAdd}
       disabled={outOfStock}
-      className="flex-1 flex items-center justify-center gap-3 transition-opacity"
-      style={{
-        backgroundColor: outOfStock ? 'var(--gray-100)' : 'var(--navy)',
-        color: outOfStock ? 'var(--gray-400)' : 'var(--cream)',
-        fontFamily: 'Jost, sans-serif',
-        fontSize: '0.7rem',
-        fontWeight: 500,
-        letterSpacing: '0.2em',
-        textTransform: 'uppercase',
-        padding: '16px 24px',
-        cursor: outOfStock ? 'not-allowed' : 'pointer',
-        opacity: outOfStock ? 0.6 : 1,
-      }}
+      className="add-to-bag"
     >
-      {added ? (
-        <>
-          <Check size={14} /> Added to Bag
-        </>
-      ) : outOfStock ? (
-        'Out of Stock'
-      ) : (
-        <>
-          <ShoppingBag size={14} /> Add to Bag
-        </>
-      )}
+      <span>{added ? 'Added to bag' : outOfStock ? 'Out of stock' : 'Add to bag'}</span>
+      {!outOfStock && <span aria-hidden="true">{added ? 'Done' : '↗'}</span>}
     </button>
   )
 }

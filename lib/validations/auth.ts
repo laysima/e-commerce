@@ -25,7 +25,30 @@ export const registerSchema = z.object({
   }
 )
 
+// Rules for the forgot-password form
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('Invalid email address'),
+})
+
+// Rules for setting a new password after a reset link
+export const resetPasswordSchema = z.object({
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+    .regex(/[0-9]/, 'Must contain at least one number'),
+  confirm_password: z.string(),
+}).refine(
+  data => data.password === data.confirm_password,
+  {
+    message: "Passwords don't match",
+    path: ['confirm_password'],
+  }
+)
+
 // These types are auto-generated from the schemas above
 // Use them in your form components for type safety
 export type LoginInput = z.infer<typeof loginSchema>
 export type RegisterInput = z.infer<typeof registerSchema>
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>
