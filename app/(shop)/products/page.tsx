@@ -42,7 +42,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
 
   return (
     <CatalogView
-      eyebrow={params.search ? 'Search results' : 'Collection / 2026'}
+      eyebrow={params.search ? 'Search results' : 'Find your next favourite'}
       title={title}
       description={activeCategory?.description ?? 'A considered selection of clothing and footwear, chosen for proportion, material, and everyday use.'}
       products={products}

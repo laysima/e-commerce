@@ -41,49 +41,50 @@ function AdminSidebarContent({ profile }: Props) {
   return (
     <>
       <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto">
-        <div className="px-2 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-          <motion.div animate={fade}>
-            <Link
-              href="/"
-              className="block"
-              style={{
-                fontFamily: 'Playfair Display, serif',
-                fontSize: '1.3rem',
-                fontWeight: 500,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                color: 'var(--cream)',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Cressida
-            </Link>
-            <p
-              className="mt-0.5"
-              style={{
-                fontFamily: 'Jost, sans-serif',
-                fontSize: '0.62rem',
-                fontWeight: 400,
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-                color: 'var(--gold)',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Admin Panel
-            </p>
-          </motion.div>
-          {!open && (
+        <div className="py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          {open ? (
+            <div>
+              <Link
+                href="/"
+                className="block"
+                style={{
+                  fontFamily: 'Playfair Display, serif',
+                  fontSize: '1.3rem',
+                  fontWeight: 500,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: 'var(--cream)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Cressida
+              </Link>
+              <p
+                className="mt-0.5"
+                style={{
+                  fontFamily: 'Jost, sans-serif',
+                  fontSize: '0.62rem',
+                  fontWeight: 400,
+                  letterSpacing: '0.2em',
+                  textTransform: 'uppercase',
+                  color: 'var(--gold)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Admin Panel
+              </p>
+            </div>
+          ) : (
             <Link
               href="/"
               aria-label="Cressida admin"
-              className="flex items-center justify-center"
+              className="mx-auto flex items-center justify-center"
               style={{
-                width: '28px',
-                height: '28px',
+                width: '32px',
+                height: '32px',
                 border: '1px solid var(--gold)',
                 fontFamily: 'Playfair Display, serif',
-                fontSize: '0.85rem',
+                fontSize: '0.9rem',
                 color: 'var(--gold)',
               }}
             >
@@ -121,8 +122,8 @@ function AdminSidebarContent({ profile }: Props) {
         </div>
       </div>
 
-      <div className="px-2 py-5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <div className="flex items-center gap-3">
+      <div className="py-5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className={`flex items-center gap-3 ${open ? '' : 'justify-center'}`}>
           <div
             className="flex items-center justify-center shrink-0"
             style={{
@@ -138,7 +139,7 @@ function AdminSidebarContent({ profile }: Props) {
           >
             {(profile?.full_name ?? profile?.email ?? 'A').charAt(0).toUpperCase()}
           </div>
-          <motion.div animate={fade} className="min-w-0">
+          <motion.div initial={false} animate={fade} className="min-w-0">
             <p
               style={{
                 fontFamily: 'Jost, sans-serif',

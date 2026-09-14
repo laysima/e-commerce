@@ -2,336 +2,111 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { formatPrice } from '@/lib/utils'
-import DriftWall, { type DriftWallItem } from '@/components/home/DriftWall'
-import FoldText from '@/components/home/FoldText'
-import MaskedHeading from '@/components/home/MaskedHeading'
-import PixelSwap from '@/components/home/PixelSwap'
-import ScrollExpand from '@/components/home/ScrollExpand'
-import TextLoop from '@/components/home/TextLoop'
-import TrueFocus from '@/components/home/TrueFocus'
+import { StudioMotion, MotionToggle } from '@/components/home/StudioMotion'
+import LiquidImage from '@/components/home/LiquidImage'
+import { CampaignStudy, DepartmentIndex, MagneticLink, ScrollManifesto } from '@/components/home/AtelierInteractions'
+import styles from '@/components/home/Atelier.module.css'
 import type { Category, Product } from '@/types'
 
 const fallbackCategories = [
-  { name: "Women's", slug: 'womens-clothing' },
-  { name: "Men's", slug: 'mens-clothing' },
-  { name: 'Shoes', slug: 'sneakers' },
-  { name: 'Objects', slug: 'accessories' },
+  { name: 'Women', slug: 'womens-clothing', description: 'An instinct for the unexpected.', image_url: null },
+  { name: 'Men', slug: 'mens-clothing', description: 'Easy proportions. A different perspective.', image_url: null },
+  { name: 'Sneakers', slug: 'sneakers', description: 'Made for wherever the day goes.', image_url: null },
+  { name: 'Objects', slug: 'accessories', description: 'The details that make it yours.', image_url: null },
 ]
-
-const editorialCampaign = [
-  {
-    src: '/cressida-editorial-travertine.png',
-    alt: 'Model in tobacco tailoring beneath a travertine colonnade',
-    title: 'Warm structure',
-  },
-  {
-    src: '/cressida-editorial-copper.png',
-    alt: 'Two models crossing an oxidized copper gallery',
-    title: 'Quiet contrast',
-  },
-  {
-    src: '/cressida-editorial-concrete.png',
-    alt: 'Model in grey tailoring on a sculptural concrete stair',
-    title: 'Soft geometry',
-  },
-]
+const departmentOrder = ['womens-clothing', 'mens-clothing', 'sneakers', 'formal-shoes', 'accessories']
+const departmentNames: Record<string, string> = {
+  'womens-clothing': 'Women', 'mens-clothing': 'Men', sneakers: 'Sneakers', 'formal-shoes': 'Shoes', accessories: 'Objects',
+}
+const departmentImages: Record<string, string> = {
+  'womens-clothing': '/cressida-editorial-travertine.webp',
+  'mens-clothing': '/cressida-editorial-concrete.webp',
+  sneakers: '/cressida-editorial-concrete.webp',
+  'formal-shoes': '/cressida-editorial-travertine.webp',
+  accessories: '/cressida-editorial-copper.webp',
+}
 
 export default async function HomePage() {
   const supabase = await createClient()
-
   const [{ data: catalogProducts }, { data: categories }] = await Promise.all([
-    supabase
-      .from('products')
-      .select('*, category:categories(name, slug)')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-      .limit(18),
-    supabase
-      .from('categories')
-      .select('*')
-      .limit(5),
+    supabase.from('products').select('*, category:categories(name, slug)').eq('is_active', true).order('created_at', { ascending: false }).limit(18),
+    supabase.from('categories').select('*').order('name'),
   ])
-
   const catalog = (catalogProducts ?? []) as Product[]
-  const featured = catalog.filter(product => product.is_featured)
-  const products = [
-    ...featured,
-    ...catalog.filter(product => !product.is_featured),
-  ].slice(0, 6)
-  const categoryLinks = categories?.length ? (categories as Category[]) : fallbackCategories
-  const imageEntries = catalog.flatMap(product =>
-    (product.images ?? []).map((image, imageIndex) => ({ product, image, imageIndex }))
-  )
-  const driftItems: DriftWallItem[] = imageEntries.slice(0, 18).map(({ product, image }) => ({
-      image,
-      title: product.name,
-      href: `/products/${product.slug}`,
-  }))
-  const heroCampaign = editorialCampaign[0]
+  const products = [...catalog.filter(product => product.is_featured), ...catalog.filter(product => !product.is_featured)].slice(0, 3)
+  const departments = [...(categories?.length ? categories as Category[] : fallbackCategories)]
+    .sort((a, b) => {
+      const rank = (slug: string) => departmentOrder.includes(slug) ? departmentOrder.indexOf(slug) : departmentOrder.length
+      return rank(a.slug) - rank(b.slug)
+    })
+    .slice(0, 5)
+    .map(category => ({
+      name: departmentNames[category.slug] || category.name,
+      slug: category.slug,
+      description: category.description,
+      image: category.image_url || departmentImages[category.slug] || '/cressida-editorial-copper.webp',
+    }))
 
   return (
-    <div className="editorial-home">
-      <section className="editorial-hero">
-        <div className="editorial-hero__copy">
-          <div className="editorial-kicker">
-            <span>New collection</span>
-            <span>Thunder Bay / Canada</span>
-          </div>
-          <FoldText
-            text={'Form follows\nfeeling.'}
-            splitBy="char"
-            hinge="top"
-            trigger="load"
-            duration={0.72}
-            stagger={0.035}
-            perspective={900}
-            creaseShading={0.28}
-            fontSize="clamp(4.2rem, 9.4vw, 10.5rem)"
-            fontWeight={500}
-            color="var(--ink)"
-          />
-          <div className="editorial-hero__intro">
-            <p>
-              A considered wardrobe built around proportion, touch, and the quiet confidence
-              of pieces that earn their place.
-            </p>
-            <Link href="/products" className="editorial-link editorial-link--dark">
-              Shop the new edit
-            </Link>
-          </div>
+    <StudioMotion>
+      <section className={styles.hero} aria-labelledby="campaign-title">
+        <Image src="/cressida-editorial-travertine.webp" alt="A model in a sculptural tobacco coat standing in the afternoon light of a stone colonnade" fill preload unoptimized sizes="100vw" className={styles.heroImage} />
+        <LiquidImage src="/cressida-editorial-travertine.webp" />
+        <div className={styles.heroShade} />
+        <div className={styles.heroTop}>
+          <p>Independent spirit.<br />Considered clothing.</p>
+          <span>The new collection</span>
         </div>
-
-        <div className="editorial-hero__media">
-          {heroCampaign ? (
-            <Image
-              src={heroCampaign.src}
-              alt={heroCampaign.alt}
-              fill
-              priority
-              sizes="(max-width: 760px) 100vw, 58vw"
-              className="editorial-hero__image"
-            />
-          ) : (
-            <div className="editorial-hero__placeholder" aria-hidden="true" />
-          )}
-          <div className="editorial-hero__caption">
-            <span>Campaign</span>
-            <span>{heroCampaign?.title ?? 'Collection in preparation'}</span>
-          </div>
-          <TextLoop
-            text="Cressida Atelier"
-            shape="circle"
-            speed={72}
-            separator="·"
-            curviness={90}
-            fontSize={25}
-            fontWeight={500}
-            letterSpacing={3}
-            uppercase
-            color="#f7f3eb"
-            pauseOnHover
-            className="editorial-hero__seal"
-          />
+        <div className={styles.heroTitle}>
+          <h1 id="campaign-title"><span>Dress like</span>{' '}<em>you mean it.</em></h1>
+          <p>Good clothes. A little instinct.<br />An entirely different feeling.</p>
         </div>
+        <div className={styles.heroBottom}>
+          <a href="#the-edit" className={styles.discover}>A change of perspective</a>
+          <MagneticLink href="/products" className={styles.shopOrb} label="Explore the new collection"><span>Explore<br />the collection</span></MagneticLink>
+        </div>
+        <span className={styles.heroSide}>Cressida, by instinct</span>
       </section>
 
-      <section className="service-line" aria-label="Shopping services">
-        <p>Complimentary delivery on qualifying orders</p>
-        <p>Free returns within thirty days</p>
-        <p>Personal client service, seven days</p>
-      </section>
-
-      <section className="department-index">
-        <header className="department-index__heading">
-          <p className="section-index">Departments</p>
-          <h2>Find your place<br />in the collection.</h2>
-          <p>A quieter route through the wardrobe, organised by how you want to wear it.</p>
+      <section id="the-edit" className={styles.edit} aria-labelledby="edit-title">
+        <header className={styles.editHeader}>
+          <div><p className={styles.eyebrow}>The current obsession</p><h2 id="edit-title">A good place<br />to <em>begin.</em></h2></div>
+          <div className={styles.editIntro}><p>Pieces with presence. Layers with a little attitude. Find the ones that feel like you.</p><Link href="/products" className={styles.textLink}>Shop the entire edit</Link></div>
         </header>
-        <div className="department-index__links">
-          {categoryLinks.slice(0, 5).map((category) => (
-            <Link href={`/categories/${category.slug}`} key={category.slug}>
-              <strong>{category.name}</strong>
-              <small>View department</small>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="featured-edit">
-        <header className="section-heading">
-          <div>
-            <p className="section-index">The current edit</p>
-            <h2>A considered selection.</h2>
-          </div>
-          <p className="section-heading__note">
-            A compact edit of clothing and footwear chosen for proportion, texture, and everyday use.
-          </p>
-          <Link href="/products" className="editorial-link editorial-link--dark">
-            View the complete collection
-          </Link>
-        </header>
-
-        {products.length ? (
-          <div className="product-editorial-grid">
-            {products.map((product) => (
-              <Link
-                href={`/products/${product.slug}`}
-                className="product-editorial"
-                key={product.id}
-              >
-                <div className="product-editorial__image">
-                  {product.images?.[0] ? (
-                    <Image src={product.images[0]} alt={product.name} fill sizes="(max-width: 760px) 46vw, (max-width: 1200px) 30vw, 340px" />
-                  ) : (
-                    <span className="product-editorial__placeholder">Image forthcoming</span>
-                  )}
+        {products.length > 0 ? (
+          <div className={styles.productSpread}>
+            {products.map(product => (
+              <Link href={`/products/${product.slug}`} className={styles.piece} key={product.id}>
+                <div className={styles.pieceImage}>
+                  {product.images?.[0] ? <Image src={product.images[0]} alt={product.name} fill sizes="(max-width: 600px) 85vw, (max-width: 900px) 45vw, 33vw" /> : <span className={styles.imagePending}>A new favourite awaits</span>}
+                  {product.images?.[1] && <Image src={product.images[1]} alt="" fill sizes="(max-width: 600px) 85vw, (max-width: 900px) 45vw, 33vw" className={styles.pieceAlternate} />}
+                  <span className={styles.pieceAction}>Take a closer look</span>
                 </div>
-                <div className="product-editorial__meta">
-                  <div>
-                    <p>{(product.category as Category | null)?.name ?? 'Cressida edit'}</p>
-                    <h3>{product.name}</h3>
-                  </div>
-                  <p>{formatPrice(product.price)}</p>
-                </div>
+                <div className={styles.pieceInfo}><div><span>{(product.category as Category | null)?.name || 'The Cressida edit'}</span><h3>{product.name}</h3></div><p>{formatPrice(product.price)}</p></div>
               </Link>
             ))}
           </div>
         ) : (
-          <div className="collection-empty">
-            <div>
-              <p>The collection is being prepared.</p>
-              <Link href="/products" className="editorial-link">Enter the archive</Link>
-            </div>
-          </div>
+          <div className={styles.emptyEdit}><Image src="/cressida-editorial-concrete.webp" alt="Relaxed tailoring in a sculptural concrete setting" width={1122} height={1402} /><div><p>Something worth waiting for.</p><Link href="/products" className={styles.textLink}>Discover the collection</Link></div></div>
         )}
+        <div className={styles.editFoot}><span>Selected with feeling. Worn your way.</span><span>Clothing, footwear & everyday objects</span></div>
       </section>
 
-      <section className="masked-statement">
-          <p className="section-index">Our point of view</p>
-          <MaskedHeading
-            tag="h2"
-            text="Designed in the details"
-            src="/cressida-editorial-concrete.png"
-            fillScale={1.28}
-            parallax={28}
-            drift={12}
-            brightness={0.94}
-            saturation={0.76}
-            textScale={0.122}
-            weight={600}
-            tracking={-0.055}
-            lineHeight={0.92}
-            reveal="wipe"
-            trigger="view"
-          />
-          <div className="masked-statement__note">
-            <span>Fewer, better things.</span>
-            <p>We choose pieces for the life they gain through wear, not the attention they ask for on day one.</p>
-          </div>
+      <section className={styles.manifesto} aria-label="Our point of view">
+        <p className={styles.eyebrow}>Clothes are personal. Keep them that way.</p>
+        <ScrollManifesto text="A wardrobe should feel like a point of view. Not a set of rules." />
+        <div className={styles.manifestoBottom}><span className={styles.brandGlyph} aria-hidden="true">c.</span><p>We follow texture, shape and that hard to explain feeling. The rest is up to you.</p><span className={styles.signature}>With feeling,<br /><em>Cressida</em></span></div>
       </section>
 
-      <section className="interactive-editorial">
-          <div className="interactive-editorial__copy">
-            <p className="section-index">A private note</p>
-            <h2>There is more<br />beneath the surface.</h2>
-            <p>Click the image to uncover the timing of our next limited wardrobe release.</p>
-          </div>
-          <PixelSwap
-            firstContent={
-              <div className="pixel-campaign pixel-campaign--image">
-                <Image src="/cressida-editorial-copper.png" alt="Models crossing an oxidized copper gallery" fill sizes="(max-width: 800px) 100vw, 55vw" />
-                <span>Tap to reveal</span>
-              </div>
-            }
-            secondContent={
-              <div className="pixel-campaign pixel-campaign--message">
-                <p>Private release</p>
-                <strong>Late summer</strong>
-                <span>For subscribers first</span>
-              </div>
-            }
-            pixelSize={56}
-            pixelScale={0.25}
-            duration={1200}
-            pixelDuration={420}
-            pattern="diagonal"
-            fade
-            trigger="click"
-          />
+      <DepartmentIndex departments={departments} />
+      <CampaignStudy />
+
+      <section className={styles.closing} aria-labelledby="closing-title">
+        <p className={styles.eyebrow}>Trust your taste</p>
+        <h2 id="closing-title">Wear it.<br /><em>Make it yours.</em></h2>
+        <MagneticLink href="/products" className={styles.closingLink}>Find your next favourite</MagneticLink>
+        <div className={styles.closingFoot}><span>From Thunder Bay, with feeling.</span><MotionToggle /></div>
       </section>
-
-      <ScrollExpand
-          src="/cressida-editorial-travertine.png"
-          alt="Model in tobacco tailoring beneath a travertine colonnade"
-          title="The collection study"
-          scrollHint="Scroll to enter"
-          useWindowScroll
-          mediaZoom={1.22}
-        >
-          <h2>Composed with intention.</h2>
-          <p>Volume where you want it, restraint where you need it. Every piece begins with proportion and use.</p>
-      </ScrollExpand>
-
-      <section className="wardrobe-studies wardrobe-studies--flat">
-        <div className="wardrobe-studies__copy">
-          <p className="section-index section-index--light">Campaign studies</p>
-          <h2>One season,<br /><em>three moods.</em></h2>
-          <p>Pieces are selected to work together across days, weather, and ways of being.</p>
-          <Link href="/products" className="editorial-link">Explore the edit</Link>
-        </div>
-        <div className="wardrobe-studies__looks">
-          {editorialCampaign.map((image) => (
-            <Link href="/products" key={image.src}>
-              <figure>
-                <Image src={image.src} alt={image.alt} fill sizes="(max-width: 760px) 46vw, 20vw" />
-                <figcaption>{image.title}</figcaption>
-              </figure>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {driftItems.length > 0 && <section className="moving-lookbook">
-        <div className="moving-lookbook__wall">
-          <DriftWall
-            items={driftItems}
-            columns={5}
-            tileWidth={210}
-            tileHeight={290}
-            gap={18}
-            tilt={12}
-            turn={-8}
-            perspective={1300}
-            depth={80}
-            speed={34}
-            direction="up"
-            variance={0.45}
-            parallax={0.6}
-            lift={64}
-            fade={0.72}
-            dim={0.42}
-            overlayColor="#171714"
-          />
-        </div>
-        <div className="moving-lookbook__copy">
-          <p className="section-index section-index--light">Moving lookbook</p>
-          <h2>The collection<br />in context.</h2>
-          <Link href="/products" className="editorial-link">Discover every look</Link>
-        </div>
-      </section>}
-
-      <section className="focus-statement">
-        <p className="section-index">The Cressida principle</p>
-        <TrueFocus
-          sentence="Less. Better. Worn."
-          manualMode={false}
-          blurAmount={5}
-          borderColor="#a44b36"
-          animationDuration={1.4}
-          pauseBetweenAnimations={0.65}
-        />
-        <p className="focus-statement__foot">Designed to become yours, not just to be new.</p>
-      </section>
-    </div>
+    </StudioMotion>
   )
 }

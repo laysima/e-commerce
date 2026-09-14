@@ -22,7 +22,7 @@ export default async function AdminLayout({
 
   return (
     <div
-      className="min-h-screen flex"
+      className="min-h-screen flex flex-col md:flex-row"
       style={{ backgroundColor: 'var(--gray-50)' }}
     >
       <AdminSidebar profile={profile} />

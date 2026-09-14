@@ -24,7 +24,6 @@ export default function AddToCartButton({ product }: { product: Product }) {
       className="add-to-bag"
     >
       <span>{added ? 'Added to bag' : outOfStock ? 'Out of stock' : 'Add to bag'}</span>
-      {!outOfStock && <span aria-hidden="true">{added ? 'Done' : '↗'}</span>}
     </button>
   )
 }

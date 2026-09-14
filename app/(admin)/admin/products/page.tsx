@@ -4,6 +4,9 @@ import { createClient } from '@/lib/supabase/server'
 import { formatPrice } from '@/lib/utils'
 import DeleteProductButton from '@/components/admin/DeleteProductButton'
 
+// Shared by the header row and the data rows so columns always line up.
+const TABLE_COLUMNS = 'minmax(230px, 2.2fr) minmax(110px, 1fr) 100px 80px 96px 92px'
+
 export default async function AdminProductsPage() {
   const supabase = await createClient()
 
@@ -50,22 +53,28 @@ export default async function AdminProductsPage() {
 
       {/* Table */}
       <div
+        className="overflow-x-auto"
         style={{
           borderTop: '1px solid var(--gray-200)',
           borderBottom: '1px solid var(--gray-200)',
         }}
       >
+        <div style={{ minWidth: '860px' }}>
         {/* Table Header */}
         <div
-          className="grid px-6 py-3"
+          className="grid items-center gap-4 px-6 py-3"
           style={{
-            gridTemplateColumns: '2.5fr 1fr 1fr 1fr 100px 90px',
+            gridTemplateColumns: TABLE_COLUMNS,
             borderBottom: '1px solid var(--gray-100)',
             backgroundColor: 'var(--cream)',
           }}
         >
-          {['Product', 'Category', 'Price', 'Stock', 'Status', ''].map((h, i) => (
-            <p key={i} className="eyebrow" style={{ fontSize: '0.58rem' }}>
+          {['Product', 'Category', 'Price', 'Stock', 'Status', 'Actions'].map((h, i) => (
+            <p
+              key={i}
+              className="eyebrow"
+              style={{ fontSize: '0.58rem', textAlign: i === 5 ? 'right' : 'left' }}
+            >
               {h}
             </p>
           ))}
@@ -73,14 +82,22 @@ export default async function AdminProductsPage() {
 
         {/* Rows */}
         <div className="divide-y divide-gray-50">
+          {!products?.length && (
+            <p
+              className="px-6 py-10 text-center"
+              style={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', fontWeight: 300, color: 'var(--gray-400)' }}
+            >
+              No products yet. Use “Add Product” to create your first listing.
+            </p>
+          )}
           {products?.map(product => (
             <div
               key={product.id}
-              className="grid items-center px-6 py-4"
-              style={{ gridTemplateColumns: '2.5fr 1fr 1fr 1fr 100px 90px' }}
+              className="grid items-center gap-4 px-6 py-4"
+              style={{ gridTemplateColumns: TABLE_COLUMNS }}
             >
               {/* Product */}
-              <div className="flex items-center gap-3">
+              <div className="flex min-w-0 items-center gap-3">
                 <div
                   style={{
                     width: '44px',
@@ -105,8 +122,9 @@ export default async function AdminProductsPage() {
                     </div>
                   )}
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p
+                    className="truncate"
                     style={{
                       fontFamily: 'Playfair Display, serif',
                       fontWeight: 400,
@@ -117,6 +135,7 @@ export default async function AdminProductsPage() {
                     {product.name}
                   </p>
                   <p
+                    className="truncate"
                     style={{
                       fontFamily: 'Jost, sans-serif',
                       fontSize: '0.7rem',
@@ -132,6 +151,7 @@ export default async function AdminProductsPage() {
 
               {/* Category */}
               <p
+                className="truncate"
                 style={{
                   fontFamily: 'Jost, sans-serif',
                   fontSize: '0.78rem',
@@ -172,7 +192,7 @@ export default async function AdminProductsPage() {
 
               {/* Status */}
               <div
-                className="inline-flex items-center px-2 py-1"
+                className="inline-flex items-center justify-self-start px-2 py-1"
                 style={{
                   backgroundColor: product.is_active
                     ? 'rgba(16,185,129,0.08)'
@@ -197,7 +217,7 @@ export default async function AdminProductsPage() {
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-end gap-4">
                 <Link
                   href={`/admin/products/${product.id}`}
                   className="transition-opacity hover:opacity-60"
@@ -210,6 +230,7 @@ export default async function AdminProductsPage() {
               </div>
             </div>
           ))}
+        </div>
         </div>
       </div>
     </div>

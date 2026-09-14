@@ -52,7 +52,7 @@ export default function CatalogView({
         </div>
         <div className="catalog-hero__aside">
           {description && <p>{description}</p>}
-          <span>{String(products.length).padStart(2, '0')} pieces</span>
+          <span>{products.length} {products.length === 1 ? 'piece' : 'pieces'} to make your own</span>
         </div>
       </header>
 
@@ -82,15 +82,15 @@ export default function CatalogView({
 
       {products.length ? (
         <div className="catalog-grid">
-          {products.map((product, index) => (
+          {products.map(product => (
             <Link href={`/products/${product.slug}`} className="catalog-product" key={product.id}>
               <div className="catalog-product__media">
                 {product.images?.[0] ? (
-                  <Image src={product.images[0]} alt={product.name} fill sizes="(max-width: 700px) 50vw, 25vw" />
+                  <Image src={product.images[0]} alt={product.name} fill sizes="(max-width: 700px) 45vw, 31vw" />
                 ) : (
                   <span>Image forthcoming</span>
                 )}
-                <small>{String(index + 1).padStart(2, '0')}</small>
+                {product.images?.[1] && <Image src={product.images[1]} alt="" fill sizes="(max-width: 700px) 45vw, 31vw" className="catalog-product__alternate" />}
                 {product.compare_at_price && <em>Reduced</em>}
               </div>
               <div className="catalog-product__info">
@@ -110,7 +110,7 @@ export default function CatalogView({
         <div className="catalog-empty">
           <p>No pieces match this edit.</p>
           <span>Try another department or return to the full collection.</span>
-          <Link href="/products" className="editorial-link editorial-link--dark">View all pieces <span aria-hidden="true">↗</span></Link>
+          <Link href="/products" className="editorial-link editorial-link--dark">View all pieces</Link>
         </div>
       )}
     </div>

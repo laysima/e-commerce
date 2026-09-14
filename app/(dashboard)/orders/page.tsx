@@ -47,7 +47,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         <div className="orders-empty">
           <p>No orders yet.</p>
           <span>Your order history will collect here over time.</span>
-          <Link href="/products" className="editorial-link editorial-link--dark">Start with the collection <span aria-hidden="true">↗</span></Link>
+          <Link href="/products" className="editorial-link editorial-link--dark">Start with the collection</Link>
         </div>
       ) : (
         <div className="orders-list">

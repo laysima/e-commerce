@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createClient } from '@/lib/supabase/client'
 import { registerSchema, type RegisterInput } from '@/lib/validations/auth'
+import { describeAuthError } from '@/lib/auth-errors'
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -13,6 +14,8 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [submittedEmail, setSubmittedEmail] = useState('')
+  const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent'>('idle')
   const [supabase] = useState(() => createClient())
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterInput>({ resolver: zodResolver(registerSchema) })
 
@@ -22,15 +25,35 @@ export default function RegisterPage() {
     const { error: signUpError } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
-      options: { data: { full_name: data.full_name } },
+      options: {
+        data: { full_name: data.full_name },
+        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+      },
     })
     if (signUpError) {
-      setError(signUpError.message)
+      setError(describeAuthError(signUpError.message))
       setIsLoading(false)
       return
     }
+    setSubmittedEmail(data.email)
     setSuccess(true)
     setIsLoading(false)
+  }
+
+  const resendConfirmation = async () => {
+    if (!submittedEmail) return
+    setResendState('sending')
+    const { error: resendError } = await supabase.auth.resend({
+      type: 'signup',
+      email: submittedEmail,
+      options: { emailRedirectTo: `${window.location.origin}/api/auth/callback` },
+    })
+    if (resendError) {
+      setError(describeAuthError(resendError.message))
+      setResendState('idle')
+      return
+    }
+    setResendState('sent')
   }
 
   if (success) {
@@ -38,8 +61,25 @@ export default function RegisterPage() {
       <main className="auth-success">
         <p className="section-index">Account requested</p>
         <h1>Check your inbox.</h1>
-        <p>We sent a verification link to your email address. Follow it to activate your Cressida account.</p>
-        <Link href="/login" className="editorial-link editorial-link--dark">Return to sign in <span aria-hidden="true">↗</span></Link>
+        <p>
+          We sent a verification link to {submittedEmail || 'your email address'}. Follow it to
+          activate your Cressida account — you won&apos;t be able to sign in until you do.
+        </p>
+        {error && <p className="form-message form-message--error">{error}</p>}
+        <p className="auth-success__resend">
+          {resendState === 'sent' ? (
+            'Verification link sent again.'
+          ) : (
+            <>
+              Nothing arrived? Check your spam folder, or{' '}
+              <button type="button" onClick={resendConfirmation} disabled={resendState === 'sending'}>
+                {resendState === 'sending' ? 'sending…' : 'resend the link'}
+              </button>
+              .
+            </>
+          )}
+        </p>
+        <Link href="/login" className="editorial-link editorial-link--dark">Return to sign in</Link>
       </main>
     )
   }
@@ -88,7 +128,7 @@ export default function RegisterPage() {
               {errors.confirm_password && <small>{errors.confirm_password.message}</small>}
             </label>
             <button className="auth-submit" type="submit" disabled={isLoading}>
-              <span>{isLoading ? 'Creating account…' : 'Create account'}</span><span aria-hidden="true">↗</span>
+              <span>{isLoading ? 'Creating account…' : 'Create account'}</span>
             </button>
           </form>
           <p className="auth-switch">Already have an account? <Link href="/login">Sign in</Link></p>

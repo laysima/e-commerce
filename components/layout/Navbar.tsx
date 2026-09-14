@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCartStore } from '@/store/cartStore'
@@ -25,6 +25,8 @@ export default function Navbar() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [mounted, setMounted] = useState(false)
   const [supabase] = useState(() => createClient())
+  const searchDialog = useRef<HTMLDialogElement>(null)
+  const menuDialog = useRef<HTMLDialogElement>(null)
 
   const router = useRouter()
   const totalItems = useCartStore(state => state.totalItems())
@@ -54,9 +56,37 @@ export default function Navbar() {
   }, [supabase])
 
   useEffect(() => {
+    const previousOverflow = document.body.style.overflow
+    const previousFocus = document.activeElement
+    const activeDialog = isSearchOpen ? searchDialog.current : isMenuOpen ? menuDialog.current : null
     document.body.style.overflow = isMenuOpen || isSearchOpen ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
+    if (isSearchOpen) {
+      searchDialog.current?.showModal()
+      searchDialog.current?.querySelector<HTMLInputElement>('input')?.focus({ preventScroll: true })
+    }
+    if (isMenuOpen) menuDialog.current?.showModal()
+    return () => {
+      activeDialog?.close()
+      document.body.style.overflow = previousOverflow
+      if (activeDialog && previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus({ preventScroll: true })
+    }
   }, [isMenuOpen, isSearchOpen])
+
+  useEffect(() => {
+    if (!isUserMenuOpen) return
+    const dismiss = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsUserMenuOpen(false)
+    }
+    const clickOutside = (event: MouseEvent) => {
+      if (event.target instanceof Element && !event.target.closest('.account-menu')) setIsUserMenuOpen(false)
+    }
+    document.addEventListener('keydown', dismiss)
+    document.addEventListener('click', clickOutside)
+    return () => {
+      document.removeEventListener('keydown', dismiss)
+      document.removeEventListener('click', clickOutside)
+    }
+  }, [isUserMenuOpen])
 
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault()
@@ -94,7 +124,7 @@ export default function Navbar() {
           <Link href="/categories/mens-clothing">Men</Link>
         </nav>
 
-        <Link href="/" className="site-wordmark" aria-label="Cressida home">Cressida</Link>
+        <Link href="/" className="site-wordmark" aria-label="Cressida home">cressida<span>.</span></Link>
 
         <div className="site-header__nav site-header__nav--right">
           <button type="button" onClick={() => setIsSearchOpen(true)}>Search</button>
@@ -140,7 +170,7 @@ export default function Navbar() {
       </div>
 
       {isSearchOpen && (
-        <div className="site-search">
+        <dialog ref={searchDialog} className="site-search" aria-label="Search the collection" onCancel={() => setIsSearchOpen(false)}>
           <div className="site-search__top">
             <span>Search the collection</span>
             <button type="button" onClick={() => setIsSearchOpen(false)}>Close</button>
@@ -150,42 +180,41 @@ export default function Navbar() {
             <div>
               <input
                 id="site-search-input"
-                autoFocus
                 value={searchQuery}
                 onChange={event => setSearchQuery(event.target.value)}
                 placeholder="Coat, shoe, or collection"
               />
-              <button type="submit">Search ↗</button>
+              <button type="submit">Search</button>
             </div>
           </form>
           <div className="site-search__suggestions">
             <span>Suggested</span>
-            <Link href="/products?sort=">New arrivals</Link>
-            <Link href="/categories/formal-shoes">Leather shoes</Link>
-            <Link href="/categories/accessories">Everyday objects</Link>
+            <Link href="/products" onClick={() => setIsSearchOpen(false)}>New arrivals</Link>
+            <Link href="/categories/formal-shoes" onClick={() => setIsSearchOpen(false)}>Leather shoes</Link>
+            <Link href="/categories/accessories" onClick={() => setIsSearchOpen(false)}>Everyday objects</Link>
           </div>
-        </div>
+        </dialog>
       )}
 
       {isMenuOpen && (
-        <div className="site-menu">
+        <dialog ref={menuDialog} className="site-menu" aria-label="Main menu" onCancel={() => setIsMenuOpen(false)}>
           <div className="site-menu__top">
-            <Link href="/" onClick={() => setIsMenuOpen(false)} className="site-wordmark">Cressida</Link>
+            <Link href="/" onClick={() => setIsMenuOpen(false)} className="site-wordmark">cressida<span>.</span></Link>
             <button type="button" onClick={() => setIsMenuOpen(false)}>Close</button>
           </div>
           <nav aria-label="Mobile navigation">
-            <Link href="/products" onClick={() => setIsMenuOpen(false)}><span>00</span>Shop all</Link>
-            {categories.map((category, index) => (
+            <Link href="/products" onClick={() => setIsMenuOpen(false)}>Shop all</Link>
+            {categories.map(category => (
               <Link href={`/categories/${category.slug}`} onClick={() => setIsMenuOpen(false)} key={category.slug}>
-                <span>{String(index + 1).padStart(2, '0')}</span>{category.name}
+                {category.name}
               </Link>
             ))}
           </nav>
           <div className="site-menu__utility">
-            <Link href="/wishlist">Saved pieces</Link>
-            <Link href={profile ? '/account' : '/login'}>{profile ? 'My account' : 'Sign in'}</Link>
+            <Link href="/wishlist" onClick={() => setIsMenuOpen(false)}>Saved pieces</Link>
+            <Link href={profile ? '/account' : '/login'} onClick={() => setIsMenuOpen(false)}>{profile ? 'My account' : 'Sign in'}</Link>
           </div>
-        </div>
+        </dialog>
       )}
     </header>
   )

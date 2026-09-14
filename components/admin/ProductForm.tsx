@@ -53,6 +53,19 @@ const inputStyle = {
   outline: 'none',
 }
 
+const errorTextStyle = {
+  fontFamily: 'Jost, sans-serif',
+  fontSize: '0.72rem',
+  fontWeight: 300 as const,
+  color: '#DC2626',
+  marginTop: '6px',
+}
+
+// Red asterisk marking a field that must be filled in before saving.
+const Required = () => (
+  <span style={{ color: '#DC2626', marginLeft: '4px' }} aria-hidden="true">*</span>
+)
+
 export default function ProductForm({ categories, product }: Props) {
   const isEditing = !!product
   const router = useRouter()
@@ -61,6 +74,7 @@ export default function ProductForm({ categories, product }: Props) {
   const [isLoading, setIsLoading] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [imageUrl, setImageUrl] = useState('')
 
   const [form, setForm] = useState({
@@ -72,14 +86,45 @@ export default function ProductForm({ categories, product }: Props) {
       ? (product.compare_at_price / 100).toString()
       : '',
     category_id: product?.category_id ?? '',
-    inventory_count: product?.inventory_count.toString() ?? '0',
+    inventory_count: product ? product.inventory_count.toString() : '',
     is_featured: product?.is_featured ?? false,
     is_active: product?.is_active ?? true,
     images: product?.images ?? [],
   })
 
-  const update = (key: string, value: string | boolean | string[]) =>
+  const update = (key: string, value: string | boolean | string[]) => {
     setForm(prev => ({ ...prev, [key]: value }))
+    // Clear this field's error as soon as the user starts correcting it.
+    setFieldErrors(prev => {
+      if (!prev[key]) return prev
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+  }
+
+  // Name, category, price and at least one image are required to save a product.
+  const validate = () => {
+    const errors: Record<string, string> = {}
+
+    if (!form.name.trim()) errors.name = 'Product name is required'
+
+    if (!form.category_id) errors.category_id = 'Category is required'
+
+    const price = parseFloat(form.price)
+    if (!form.price.trim()) errors.price = 'Price is required'
+    else if (Number.isNaN(price) || price <= 0) errors.price = 'Enter a price greater than 0'
+
+    const inventory = parseInt(form.inventory_count, 10)
+    if (!form.inventory_count.trim()) errors.inventory_count = 'Inventory count is required'
+    else if (Number.isNaN(inventory) || inventory < 0) {
+      errors.inventory_count = 'Enter a whole number of 0 or more'
+    }
+
+    if (form.images.length === 0) errors.images = 'At least one product image is required'
+
+    return errors
+  }
 
   const handleNameChange = (name: string) => {
     update('name', name)
@@ -128,25 +173,28 @@ export default function ProductForm({ categories, product }: Props) {
   }
 
   const handleSubmit = async () => {
-    setIsLoading(true)
     setError(null)
 
-    if (!form.name || !form.price) {
-      setError('Name and price are required')
-      setIsLoading(false)
+    const errors = validate()
+    setFieldErrors(errors)
+    if (Object.keys(errors).length > 0) {
+      setError('Please complete the required fields marked below.')
       return
     }
 
+    setIsLoading(true)
+
+    const inventory = parseInt(form.inventory_count, 10)
     const payload = {
-      name: form.name,
-      slug: form.slug,
+      name: form.name.trim(),
+      slug: form.slug.trim() || slugify(form.name),
       description: form.description,
       price: Math.round(parseFloat(form.price) * 100),
       compare_at_price: form.compare_at_price
         ? Math.round(parseFloat(form.compare_at_price) * 100)
         : null,
-      category_id: form.category_id || null,
-      inventory_count: parseInt(form.inventory_count),
+      category_id: form.category_id,
+      inventory_count: Number.isNaN(inventory) ? 0 : inventory,
       is_featured: form.is_featured,
       is_active: form.is_active,
       images: form.images,
@@ -191,13 +239,15 @@ export default function ProductForm({ categories, product }: Props) {
       >
         {/* Name */}
         <div>
-          <label style={labelStyle}>Product Name</label>
+          <label style={labelStyle}>Product Name<Required /></label>
           <input
-            style={inputStyle}
+            style={fieldErrors.name ? { ...inputStyle, borderColor: '#DC2626' } : inputStyle}
             value={form.name}
             onChange={e => handleNameChange(e.target.value)}
             placeholder="Classic Oxford Shirt"
+            aria-invalid={!!fieldErrors.name}
           />
+          {fieldErrors.name && <p style={errorTextStyle}>{fieldErrors.name}</p>}
         </div>
 
         {/* Slug */}
@@ -225,15 +275,18 @@ export default function ProductForm({ categories, product }: Props) {
         {/* Price + Compare At */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label style={labelStyle}>Price ($)</label>
+            <label style={labelStyle}>Price ($)<Required /></label>
             <input
-              style={inputStyle}
+              style={fieldErrors.price ? { ...inputStyle, borderColor: '#DC2626' } : inputStyle}
               type="number"
               step="0.01"
+              min="0"
               value={form.price}
               onChange={e => update('price', e.target.value)}
               placeholder="49.99"
+              aria-invalid={!!fieldErrors.price}
             />
+            {fieldErrors.price && <p style={errorTextStyle}>{fieldErrors.price}</p>}
           </div>
           <div>
             <label style={labelStyle}>Compare At Price ($)</label>
@@ -251,11 +304,16 @@ export default function ProductForm({ categories, product }: Props) {
         {/* Category + Inventory */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label style={labelStyle}>Category</label>
+            <label style={labelStyle}>Category<Required /></label>
             <select
-              style={{ ...inputStyle, cursor: 'pointer' }}
+              style={{
+                ...inputStyle,
+                cursor: 'pointer',
+                ...(fieldErrors.category_id ? { borderColor: '#DC2626' } : {}),
+              }}
               value={form.category_id}
               onChange={e => update('category_id', e.target.value)}
+              aria-invalid={!!fieldErrors.category_id}
             >
               <option value="">Select category</option>
               {categories.map(cat => (
@@ -264,28 +322,36 @@ export default function ProductForm({ categories, product }: Props) {
                 </option>
               ))}
             </select>
+            {fieldErrors.category_id && <p style={errorTextStyle}>{fieldErrors.category_id}</p>}
+            {categories.length === 0 && (
+              <p style={errorTextStyle}>No categories exist yet — add one before creating products.</p>
+            )}
           </div>
           <div>
-            <label style={labelStyle}>Inventory Count</label>
+            <label style={labelStyle}>Inventory Count<Required /></label>
             <input
-              style={inputStyle}
+              style={fieldErrors.inventory_count ? { ...inputStyle, borderColor: '#DC2626' } : inputStyle}
               type="number"
+              min="0"
+              step="1"
               value={form.inventory_count}
               onChange={e => update('inventory_count', e.target.value)}
               placeholder="100"
+              aria-invalid={!!fieldErrors.inventory_count}
             />
+            {fieldErrors.inventory_count && <p style={errorTextStyle}>{fieldErrors.inventory_count}</p>}
           </div>
         </div>
 
         {/* Images */}
         <div>
-          <label style={labelStyle}>Product Images</label>
+          <label style={labelStyle}>Product Images<Required /></label>
 
           {/* Upload from device */}
           <label
             className="flex items-center justify-center gap-3 w-full cursor-pointer transition-opacity hover:opacity-70 mb-3"
             style={{
-              border: '2px dashed var(--gray-200)',
+              border: `2px dashed ${fieldErrors.images ? '#DC2626' : 'var(--gray-200)'}`,
               padding: '20px',
               backgroundColor: isUploading ? 'var(--gray-50)' : 'var(--white)',
             }}
@@ -332,6 +398,8 @@ export default function ProductForm({ categories, product }: Props) {
               Add
             </button>
           </div>
+
+          {fieldErrors.images && <p style={errorTextStyle}>{fieldErrors.images}</p>}
 
           {/* Image Previews */}
           {form.images.length > 0 && (

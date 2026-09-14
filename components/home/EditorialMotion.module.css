@@ -7,6 +7,16 @@
   text-wrap: balance;
 }
 
+.foldLine {
+  display: block;
+}
+
+/* Keeps a word's characters together so wrapping can only happen at spaces. */
+.foldWord {
+  display: inline-block;
+  white-space: nowrap;
+}
+
 .foldPiece {
   display: inline-block;
   opacity: 0;

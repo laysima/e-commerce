@@ -28,9 +28,9 @@ export default async function AccountPage() {
           <div><span>Orders placed</span><strong>{String(orderCount ?? 0).padStart(2, '0')}</strong></div>
           <div><span>Account status</span><strong>{profile?.role === 'admin' ? 'Admin' : 'Member'}</strong></div>
           <nav>
-            <Link href="/orders"><span>Orders</span><span>↗</span></Link>
-            <Link href="/wishlist"><span>Saved pieces</span><span>↗</span></Link>
-            <Link href="/products"><span>Browse collection</span><span>↗</span></Link>
+            <Link href="/orders"><span>Orders</span></Link>
+            <Link href="/wishlist"><span>Saved pieces</span></Link>
+            <Link href="/products"><span>Browse collection</span></Link>
           </nav>
         </aside>
 

@@ -20,7 +20,7 @@ export default function AnnouncementBanner({ message, linkText, linkUrl }: Props
         {message}
         {linkText && linkUrl && (
           <>
-            {' — '}
+            {' '}
             <Link href={linkUrl}>
               {linkText}
             </Link>

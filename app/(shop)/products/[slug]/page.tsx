@@ -52,17 +52,16 @@ export default async function ProductDetailPage({ params }: PageProps) {
       </nav>
 
       <div className="product-layout">
-        <div className="product-gallery">
+        <div className={`product-gallery${item.images?.length === 1 ? ' product-gallery--single' : ''}`}>
           {item.images?.length ? item.images.map((image, index) => (
-            <figure className={index === 0 ? 'product-gallery__lead' : ''} key={image}>
+            <figure key={image}>
               <Image
                 src={image}
                 alt={`${item.name}${index ? `, view ${index + 1}` : ''}`}
                 fill
                 priority={index === 0}
-                sizes={index === 0 ? '(max-width: 900px) 100vw, 62vw' : '(max-width: 900px) 50vw, 31vw'}
+                sizes="(max-width: 900px) 100vw, 40vw"
               />
-              <figcaption>{String(index + 1).padStart(2, '0')} / {String(item.images.length).padStart(2, '0')}</figcaption>
             </figure>
           )) : (
             <div className="product-gallery__empty">Image forthcoming</div>
@@ -107,7 +106,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
           <dl className="product-service-notes">
             <div><dt>Delivery</dt><dd>Complimentary on orders over $150</dd></div>
             <div><dt>Returns</dt><dd>Free within 30 days of purchase</dd></div>
-            <div><dt>Care</dt><dd>Product-specific guidance included</dd></div>
+            <div><dt>Care</dt><dd>Guidance for your piece included</dd></div>
           </dl>
         </aside>
       </div>

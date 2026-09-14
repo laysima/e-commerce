@@ -40,7 +40,7 @@ export default function AnnouncementPopup({ message, linkText, linkUrl }: Props)
           <h2 id="announcement-title">{message}</h2>
           <div className="announcement-popup__actions">
             {linkText && linkUrl && (
-              <Link href={linkUrl} onClick={handleClose}>{linkText} <span aria-hidden="true">↗</span></Link>
+              <Link href={linkUrl} onClick={handleClose}>{linkText}</Link>
             )}
             <button type="button" onClick={handleClose}>Maybe later</button>
           </div>

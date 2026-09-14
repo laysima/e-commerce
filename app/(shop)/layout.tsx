@@ -5,6 +5,24 @@ import AnnouncementBanner from '@/components/home/AnnouncementBanner'
 import AnnouncementPopup from '@/components/home/AnnouncementPopup'
 import CartSyncProvider from '@/components/layout/CartSyncProvider'
 import { createClient } from '@/lib/supabase/server'
+import localFont from 'next/font/local'
+import './storefront.css'
+
+const atelier = localFont({
+  src: [
+    { path: '../../public/fonts/manrope-regular.ttf', weight: '400', style: 'normal' },
+    { path: '../../public/fonts/manrope-bold.ttf', weight: '700', style: 'normal' },
+  ],
+  variable: '--font-atelier',
+  display: 'swap',
+})
+const cressidaSerif = localFont({
+  src: '../../public/fonts/bodoni-moda-italic.ttf',
+  weight: '500',
+  style: 'italic',
+  variable: '--font-cressida-serif',
+  display: 'swap',
+})
 
 export default async function ShopLayout({
   children,
@@ -24,7 +42,8 @@ export default async function ShopLayout({
     .single()
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div id="page-top" className={`storefront min-h-screen flex flex-col ${atelier.variable} ${cressidaSerif.variable}`}>
+      <a className="skip-link" href="#main-content">Skip to content</a>
       {/* Top banner */}
       {announcement && (
         <AnnouncementBanner
@@ -34,7 +53,7 @@ export default async function ShopLayout({
         />
       )}
       <Navbar />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1" tabIndex={-1}>
         {children}
       </main>
       <Footer />

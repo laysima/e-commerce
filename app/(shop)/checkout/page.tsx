@@ -605,7 +605,7 @@ export default function CheckoutPage() {
                     letterSpacing: '0.05em',
                   }}
                 >
-                  ← Back to shipping
+                  Back to shipping
                 </button>
               </>
             )}

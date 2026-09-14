@@ -72,7 +72,7 @@ export default function ResetPasswordPage() {
               {errors.confirm_password && <small>{errors.confirm_password.message}</small>}
             </label>
             <button className="auth-submit" type="submit" disabled={isLoading}>
-              <span>{isLoading ? 'Saving…' : 'Save new password'}</span><span aria-hidden="true">↗</span>
+              <span>{isLoading ? 'Saving…' : 'Save new password'}</span>
             </button>
           </form>
         </div>

@@ -19,19 +19,19 @@ export default function WishlistPage() {
           <p className="section-index">Personal edit</p>
           <h1>Saved pieces</h1>
         </div>
-        <p>{String(products.length).padStart(2, '0')} {products.length === 1 ? 'piece' : 'pieces'}</p>
+        <p>{products.length} {products.length === 1 ? 'piece' : 'pieces'}</p>
       </header>
 
       {products.length === 0 ? (
         <div className="saved-empty">
           <p>Nothing saved yet.</p>
           <span>Keep the pieces you want to revisit in one quiet place.</span>
-          <Link href="/products" className="editorial-link editorial-link--dark">Browse the collection <span aria-hidden="true">↗</span></Link>
+          <Link href="/products" className="editorial-link editorial-link--dark">Browse the collection</Link>
         </div>
       ) : (
         <>
           <div className="saved-grid">
-            {products.map((product, index) => (
+            {products.map(product => (
               <article className="saved-piece" key={product.id}>
                 <div className="saved-piece__media">
                   <Link href={`/products/${product.slug}`}>
@@ -41,7 +41,6 @@ export default function WishlistPage() {
                       <span>Image forthcoming</span>
                     )}
                   </Link>
-                  <small>{String(index + 1).padStart(2, '0')}</small>
                   <button type="button" onClick={() => removeItem(product.id)}>Remove</button>
                 </div>
                 <div className="saved-piece__info">
@@ -69,7 +68,7 @@ export default function WishlistPage() {
               type="button"
               onClick={() => products.forEach(product => product.inventory_count > 0 && addToCart(product))}
             >
-              Add available pieces to bag ↗
+              Add available pieces to bag
             </button>
           </footer>
         </>

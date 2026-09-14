@@ -70,11 +70,22 @@ export const Sidebar = ({
   )
 }
 
-export const SidebarBody = (props: React.ComponentProps<typeof motion.div>) => {
+export const SidebarBody = ({
+  className,
+  children,
+  style,
+  ...rest
+}: Omit<React.ComponentProps<typeof motion.div>, 'children'> & {
+  children?: React.ReactNode
+}) => {
   return (
     <>
-      <DesktopSidebar {...props} />
-      <MobileSidebar {...(props as React.ComponentProps<'div'>)} />
+      <DesktopSidebar className={className} style={style} {...rest}>
+        {children}
+      </DesktopSidebar>
+      {/* Mobile deliberately does not inherit `style` — the desktop rail's
+          sticky/100vh sizing would stretch the mobile top bar full-screen. */}
+      <MobileSidebar className={className}>{children}</MobileSidebar>
     </>
   )
 }
@@ -88,10 +99,15 @@ export const DesktopSidebar = ({
   return (
     <motion.div
       className={cn(
-        'hidden md:flex md:flex-col h-full px-4 py-4 w-[300px] shrink-0 bg-neutral-100 dark:bg-neutral-800',
+        'hidden md:flex md:flex-col h-full py-4 shrink-0 overflow-hidden bg-neutral-100 dark:bg-neutral-800',
         className
       )}
-      animate={{ width: animate ? (open ? '300px' : '64px') : '300px' }}
+      initial={false}
+      animate={{
+        width: animate ? (open ? 300 : 72) : 300,
+        paddingLeft: animate ? (open ? 20 : 10) : 20,
+        paddingRight: animate ? (open ? 20 : 10) : 20,
+      }}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
       {...props}
@@ -151,11 +167,13 @@ export const SidebarLink = ({
   className?: string
 } & Omit<React.ComponentPropsWithoutRef<typeof Link>, 'href' | 'className'>) => {
   const { open, animate } = useSidebar()
+  const collapsed = animate && !open
   return (
     <Link
       href={link.href}
       className={cn(
-        'flex items-center gap-2 group/sidebar py-2 px-2 rounded-md',
+        'flex items-center gap-2 group/sidebar py-2 rounded-md',
+        collapsed ? 'justify-center px-0' : 'px-2',
         link.active && 'bg-[color-mix(in_srgb,var(--gold)_16%,transparent)]',
         className
       )}
@@ -163,11 +181,12 @@ export const SidebarLink = ({
     >
       {link.icon}
       <motion.span
+        initial={false}
         animate={{
           display: animate ? (open ? 'inline-block' : 'none') : 'inline-block',
           opacity: animate ? (open ? 1 : 0) : 1,
         }}
-        className="!m-0 inline-block !p-0 text-sm whitespace-pre transition duration-150 group-hover/sidebar:translate-x-1"
+        className="m-0! inline-block p-0! text-sm whitespace-pre transition duration-150 group-hover/sidebar:translate-x-1"
       >
         {link.label}
       </motion.span>

@@ -3,7 +3,7 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: {
-    default: 'Cressida — A Considered Wardrobe',
+    default: 'Cressida | Dress like you mean it',
     template: '%s | Cressida',
   },
   description: 'Contemporary clothing and footwear selected for texture, proportion, and permanence.',

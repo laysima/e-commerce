@@ -36,10 +36,26 @@ export default function FoldText({
 }: FoldTextProps) {
   const ref = useRef<HTMLHeadingElement>(null)
   const [visible, setVisible] = useState(trigger === 'load')
-  const pieces = useMemo(
-    () => (splitBy === 'word' ? text.split(/(\s+)/) : Array.from(text)),
-    [splitBy, text]
-  )
+
+  // Group characters into words so a line can only ever break *between* words.
+  // Each animated piece is inline-block, so without this the browser is free to
+  // wrap mid-word ("Form f / ollows").
+  const lines = useMemo(() => {
+    let pieceIndex = 0
+    return text.split('\n').map(line =>
+      line
+        .split(/(\s+)/)
+        .filter(token => token.length > 0)
+        .map(token => {
+          if (/^\s+$/.test(token)) return { type: 'space' as const }
+          const chars = splitBy === 'word' ? [token] : Array.from(token)
+          return {
+            type: 'word' as const,
+            chars: chars.map(char => ({ char, index: pieceIndex++ })),
+          }
+        })
+    )
+  }, [splitBy, text])
 
   useEffect(() => {
     if (trigger === 'load') {
@@ -77,23 +93,33 @@ export default function FoldText({
       style={rootStyle}
       aria-label={text}
     >
-      {pieces.map((piece, index) => {
-        if (piece === '\n') return <br key={`break-${index}`} />
-        return (
-          <span
-            aria-hidden="true"
-            className={styles.foldPiece}
-            key={`${piece}-${index}`}
-            style={{
-              animationDuration: `${duration}s`,
-              animationDelay: `${index * stagger}s`,
-              transformOrigin: hinge === 'top' ? '50% 0%' : '50% 100%',
-            }}
-          >
-            {piece.trim() ? piece : '\u00a0'}
-          </span>
-        )
-      })}
+      {lines.map((tokens, lineIndex) => (
+        <span className={styles.foldLine} key={`line-${lineIndex}`}>
+          {tokens.map((token, tokenIndex) =>
+            token.type === 'space' ? (
+              // A real breaking space \u2014 this is where a line is allowed to wrap.
+              ' '
+            ) : (
+              <span className={styles.foldWord} key={`word-${lineIndex}-${tokenIndex}`}>
+                {token.chars.map(({ char, index }) => (
+                  <span
+                    aria-hidden="true"
+                    className={styles.foldPiece}
+                    key={index}
+                    style={{
+                      animationDuration: `${duration}s`,
+                      animationDelay: `${index * stagger}s`,
+                      transformOrigin: hinge === 'top' ? '50% 0%' : '50% 100%',
+                    }}
+                  >
+                    {char}
+                  </span>
+                ))}
+              </span>
+            )
+          )}
+        </span>
+      ))}
     </h1>
   )
 }

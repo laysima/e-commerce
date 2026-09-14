@@ -34,7 +34,7 @@ export default function AccountForm({ profile }: Props) {
       <label><span>Full name</span><input value={fullName} onChange={event => setFullName(event.target.value)} placeholder="Your name" /></label>
       <label><span>Email address</span><input type="email" value={profile?.email ?? ''} disabled /><small>Email address cannot be changed.</small></label>
       <button type="button" onClick={handleSave} disabled={isLoading}>
-        <span>{isLoading ? 'Saving…' : 'Save changes'}</span><span aria-hidden="true">↗</span>
+        <span>{isLoading ? 'Saving…' : 'Save changes'}</span>
       </button>
     </div>
   )

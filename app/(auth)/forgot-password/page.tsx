@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createClient } from '@/lib/supabase/client'
 import { forgotPasswordSchema, type ForgotPasswordInput } from '@/lib/validations/auth'
+import { describeAuthError } from '@/lib/auth-errors'
 
 export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -21,7 +22,7 @@ export default function ForgotPasswordPage() {
       redirectTo: `${window.location.origin}/api/auth/callback?next=/reset-password`,
     })
     if (resetError) {
-      setError(resetError.message)
+      setError(describeAuthError(resetError.message))
       setIsLoading(false)
       return
     }
@@ -35,7 +36,7 @@ export default function ForgotPasswordPage() {
         <p className="section-index">Check your inbox</p>
         <h1>Reset link sent.</h1>
         <p>If an account exists for that email address, we&apos;ve sent a link to reset your password.</p>
-        <Link href="/login" className="editorial-link editorial-link--dark">Return to sign in <span aria-hidden="true">↗</span></Link>
+        <Link href="/login" className="editorial-link editorial-link--dark">Return to sign in</Link>
       </main>
     )
   }
@@ -63,7 +64,7 @@ export default function ForgotPasswordPage() {
               {errors.email && <small>{errors.email.message}</small>}
             </label>
             <button className="auth-submit" type="submit" disabled={isLoading}>
-              <span>{isLoading ? 'Sending…' : 'Send reset link'}</span><span aria-hidden="true">↗</span>
+              <span>{isLoading ? 'Sending…' : 'Send reset link'}</span>
             </button>
           </form>
           <p className="auth-switch">Remembered it after all? <Link href="/login">Sign in</Link></p>
