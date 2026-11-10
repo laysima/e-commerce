@@ -9,18 +9,9 @@ import localFont from 'next/font/local'
 import './storefront.css'
 
 const atelier = localFont({
-  src: [
-    { path: '../../public/fonts/manrope-regular.ttf', weight: '400', style: 'normal' },
-    { path: '../../public/fonts/manrope-bold.ttf', weight: '700', style: 'normal' },
-  ],
+  src: '../../public/fonts/archivo-variable.woff2',
+  weight: '100 900',
   variable: '--font-atelier',
-  display: 'swap',
-})
-const cressidaSerif = localFont({
-  src: '../../public/fonts/bodoni-moda-italic.ttf',
-  weight: '500',
-  style: 'italic',
-  variable: '--font-cressida-serif',
   display: 'swap',
 })
 
@@ -42,21 +33,23 @@ export default async function ShopLayout({
     .single()
 
   return (
-    <div id="page-top" className={`storefront min-h-screen flex flex-col ${atelier.variable} ${cressidaSerif.variable}`}>
+    <div id="page-top" className={`storefront min-h-screen flex flex-col ${atelier.variable}`}>
       <a className="skip-link" href="#main-content">Skip to content</a>
-      {/* Top banner */}
-      {announcement && (
-        <AnnouncementBanner
-          message={announcement.message}
-          linkText={announcement.link_text}
-          linkUrl={announcement.link_url}
-        />
-      )}
-      <Navbar />
-      <main id="main-content" className="flex-1" tabIndex={-1}>
-        {children}
-      </main>
-      <Footer />
+      <div className="shop-sheet">
+        {/* Top banner */}
+        {announcement && (
+          <AnnouncementBanner
+            message={announcement.message}
+            linkText={announcement.link_text}
+            linkUrl={announcement.link_url}
+          />
+        )}
+        <Navbar />
+        <main id="main-content" className="flex-1" tabIndex={-1}>
+          {children}
+        </main>
+        <Footer />
+      </div>
       <CartDrawer />
       <CartSyncProvider userId={user?.id ?? null} />
       {/* Popup — shows once per session */}

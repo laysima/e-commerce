@@ -20,7 +20,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
 
   let query = supabase
     .from('products')
-    .select('*, category:categories(name, slug)')
+    .select('*, category:categories(name, slug), variants:product_variants(*)')
     .eq('is_active', true)
 
   if (params.search) query = query.ilike('name', `%${params.search}%`)

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
+import { useForm, type UseFormRegisterReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { loadStripe } from '@stripe/stripe-js'
 import {
@@ -16,10 +16,40 @@ import { useCartStore } from '@/store/cartStore'
 import { formatPrice } from '@/lib/utils'
 import { checkoutSchema, type CheckoutInput } from '@/lib/validations/checkout'
 import Link from 'next/link'
+import { ChevronDown } from 'lucide-react'
+import PageBand from '@/components/shop/PageBand'
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 )
+
+function StepLabel({ title, step }: { title: string; step: string }) {
+  return (
+    <div className="landing-label checkout-step">
+      <p>{title} <ChevronDown aria-hidden="true" size={13} strokeWidth={2} /></p>
+      <span>__{step}</span>
+    </div>
+  )
+}
+
+function Field({
+  label,
+  registration,
+  error,
+  ...inputProps
+}: {
+  label: string
+  registration: UseFormRegisterReturn
+  error?: string
+} & React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <div className="checkout-field">
+      <label htmlFor={registration.name}>{label}</label>
+      <input id={registration.name} aria-invalid={Boolean(error)} {...registration} {...inputProps} />
+      {error && <p>{error}</p>}
+    </div>
+  )
+}
 
 // ── Inner form that uses Stripe hooks ──
 function CheckoutForm({
@@ -57,39 +87,10 @@ function CheckoutForm({
   }
 
   return (
-    <div className="checkout-payment">
+    <div>
       <PaymentElement />
-
-      {error && (
-        <div
-          className="mt-4 px-4 py-3 text-sm"
-          style={{
-            backgroundColor: '#FEF2F2',
-            border: '1px solid #FECACA',
-            color: '#DC2626',
-            fontFamily: 'Jost, sans-serif',
-            fontWeight: 300,
-          }}
-        >
-          {error}
-        </div>
-      )}
-
-      <button
-        onClick={handlePay}
-        disabled={isProcessing || !stripe}
-        className="w-full flex items-center justify-center gap-3 mt-6 transition-opacity hover:opacity-80 disabled:opacity-40"
-        style={{
-          backgroundColor: 'var(--navy)',
-          color: 'var(--cream)',
-          fontFamily: 'Jost, sans-serif',
-          fontSize: '0.7rem',
-          fontWeight: 500,
-          letterSpacing: '0.2em',
-          textTransform: 'uppercase',
-          padding: '16px',
-        }}
-      >
+      {error && <div className="checkout-error">{error}</div>}
+      <button onClick={handlePay} disabled={isProcessing || !stripe} className="checkout-submit">
         {isProcessing ? 'Processing payment…' : `Pay ${formatPrice(total)}`}
       </button>
     </div>
@@ -150,36 +151,12 @@ export default function CheckoutPage() {
   // Empty cart
   if (items.length === 0 && !orderComplete) {
     return (
-      <div className="checkout-state">
-        <p className="eyebrow">Checkout</p>
-        <h2
-          style={{
-            fontFamily: 'Playfair Display, serif',
-            fontWeight: 400,
-            fontSize: '1.8rem',
-            color: 'var(--navy)',
-            marginBottom: '1rem',
-          }}
-        >
-          Your bag is empty
-        </h2>
-        <Link
-          href="/products"
-          className="transition-opacity hover:opacity-80"
-          style={{
-            backgroundColor: 'var(--navy)',
-            color: 'var(--cream)',
-            fontFamily: 'Jost, sans-serif',
-            fontSize: '0.7rem',
-            fontWeight: 500,
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            padding: '14px 32px',
-            display: 'inline-block',
-          }}
-        >
-          Continue Shopping
-        </Link>
+      <div className="checkout">
+        <PageBand title="Your bag is empty" compact />
+        <div className="checkout-state">
+          <p>Nothing here yet. Find the ones that feel like you.</p>
+          <Link href="/products" className="checkout-submit">Continue shopping</Link>
+        </div>
       </div>
     )
   }
@@ -187,559 +164,104 @@ export default function CheckoutPage() {
   // Order complete
   if (orderComplete) {
     return (
-      <div className="checkout-state">
-        <p className="eyebrow">Thank you</p>
-        <h2
-          style={{
-            fontFamily: 'Playfair Display, serif',
-            fontWeight: 400,
-            fontSize: '2rem',
-            color: 'var(--navy)',
-            marginBottom: '1rem',
-          }}
-        >
-          Order Confirmed
-        </h2>
-        <p
-          style={{
-            fontFamily: 'Jost, sans-serif',
-            fontWeight: 300,
-            fontSize: '0.9rem',
-            color: 'var(--gray-400)',
-          }}
-        >
-          Redirecting you to your orders...
-        </p>
+      <div className="checkout">
+        <PageBand title="Order confirmed" compact />
+        <div className="checkout-state">
+          <p>Thank you. Redirecting you to your orders...</p>
+        </div>
       </div>
     )
   }
 
+  const shipping = totalPrice() >= 15000 ? 0 : 995
+
   return (
-    <div className="checkout-page">
+    <div className="checkout">
+      <PageBand title="Checkout" compact />
 
-      {/* Header */}
-      <div className="checkout-page__header">
-        <div className="max-w-screen-xl mx-auto px-6 lg:px-12">
-          <p className="eyebrow mb-3">Secure Checkout</p>
-          <h1
-            style={{
-              fontFamily: 'Playfair Display, serif',
-              fontWeight: 400,
-              fontSize: 'clamp(2rem, 4vw, 3rem)',
-              color: 'var(--navy)',
-            }}
-          >
-            Complete Your Order
-          </h1>
-        </div>
-      </div>
+      <div className="checkout-grid">
+        <div className="checkout-main-column">
+          {!clientSecret ? (
+            <>
+              <StepLabel title="Shipping address" step="001" />
+              {error && <div className="checkout-error">{error}</div>}
 
-      <div className="checkout-main">
-        <div className="checkout-layout">
-
-          {/* ── Left — Address + Payment ── */}
-          <div className="checkout-form-column">
-            {!clientSecret ? (
-              <>
-                {/* Shipping Address Form */}
-                <div className="mb-2">
-                  <p className="eyebrow mb-6">Shipping Address</p>
-
-                  {error && (
-                    <div
-                      className="mb-6 px-4 py-3 text-sm"
-                      style={{
-                        backgroundColor: '#FEF2F2',
-                        border: '1px solid #FECACA',
-                        color: '#DC2626',
-                        fontFamily: 'Jost, sans-serif',
-                      }}
-                    >
-                      {error}
-                    </div>
-                  )}
-
-                  <div className="space-y-5">
-
-                    {/* Full Name + Email */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label
-                          className="block mb-2"
-                          style={{
-                            fontFamily: 'Jost, sans-serif',
-                            fontSize: '0.68rem',
-                            fontWeight: 500,
-                            letterSpacing: '0.15em',
-                            textTransform: 'uppercase',
-                            color: 'var(--gray-600)',
-                          }}
-                        >
-                          Full Name
-                        </label>
-                        <input
-                          {...register('full_name')}
-                          placeholder="Jane Doe"
-                          className="w-full outline-none"
-                          style={{
-                            fontFamily: 'Jost, sans-serif',
-                            fontWeight: 300,
-                            fontSize: '0.88rem',
-                            color: 'var(--gray-900)',
-                            backgroundColor: 'var(--gray-50)',
-                            border: '1px solid var(--gray-200)',
-                            padding: '11px 14px',
-                          }}
-                        />
-                        {errors.full_name && (
-                          <p style={{ fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', color: '#DC2626', marginTop: '4px' }}>
-                            {errors.full_name.message}
-                          </p>
-                        )}
-                      </div>
-                      <div>
-                        <label
-                          className="block mb-2"
-                          style={{
-                            fontFamily: 'Jost, sans-serif',
-                            fontSize: '0.68rem',
-                            fontWeight: 500,
-                            letterSpacing: '0.15em',
-                            textTransform: 'uppercase',
-                            color: 'var(--gray-600)',
-                          }}
-                        >
-                          Email
-                        </label>
-                        <input
-                          {...register('email')}
-                          type="email"
-                          placeholder="you@example.com"
-                          className="w-full outline-none"
-                          style={{
-                            fontFamily: 'Jost, sans-serif',
-                            fontWeight: 300,
-                            fontSize: '0.88rem',
-                            color: 'var(--gray-900)',
-                            backgroundColor: 'var(--gray-50)',
-                            border: '1px solid var(--gray-200)',
-                            padding: '11px 14px',
-                          }}
-                        />
-                        {errors.email && (
-                          <p style={{ fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', color: '#DC2626', marginTop: '4px' }}>
-                            {errors.email.message}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Address Line 1 */}
-                    <div>
-                      <label
-                        className="block mb-2"
-                        style={{
-                          fontFamily: 'Jost, sans-serif',
-                          fontSize: '0.68rem',
-                          fontWeight: 500,
-                          letterSpacing: '0.15em',
-                          textTransform: 'uppercase',
-                          color: 'var(--gray-600)',
-                        }}
-                      >
-                        Street Address
-                      </label>
-                      <input
-                        {...register('line1')}
-                        placeholder="123 Main Street"
-                        className="w-full outline-none"
-                        style={{
-                          fontFamily: 'Jost, sans-serif',
-                          fontWeight: 300,
-                          fontSize: '0.88rem',
-                          color: 'var(--gray-900)',
-                          backgroundColor: 'var(--gray-50)',
-                          border: '1px solid var(--gray-200)',
-                          padding: '11px 14px',
-                        }}
-                      />
-                      {errors.line1 && (
-                        <p style={{ fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', color: '#DC2626', marginTop: '4px' }}>
-                          {errors.line1.message}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Address Line 2 */}
-                    <div>
-                      <label
-                        className="block mb-2"
-                        style={{
-                          fontFamily: 'Jost, sans-serif',
-                          fontSize: '0.68rem',
-                          fontWeight: 500,
-                          letterSpacing: '0.15em',
-                          textTransform: 'uppercase',
-                          color: 'var(--gray-600)',
-                        }}
-                      >
-                        Apartment, Suite, etc. (optional)
-                      </label>
-                      <input
-                        {...register('line2')}
-                        placeholder="Apt 4B"
-                        className="w-full outline-none"
-                        style={{
-                          fontFamily: 'Jost, sans-serif',
-                          fontWeight: 300,
-                          fontSize: '0.88rem',
-                          color: 'var(--gray-900)',
-                          backgroundColor: 'var(--gray-50)',
-                          border: '1px solid var(--gray-200)',
-                          padding: '11px 14px',
-                        }}
-                      />
-                    </div>
-
-                    {/* City + State */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label
-                          className="block mb-2"
-                          style={{
-                            fontFamily: 'Jost, sans-serif',
-                            fontSize: '0.68rem',
-                            fontWeight: 500,
-                            letterSpacing: '0.15em',
-                            textTransform: 'uppercase',
-                            color: 'var(--gray-600)',
-                          }}
-                        >
-                          City
-                        </label>
-                        <input
-                          {...register('city')}
-                          placeholder="New York"
-                          className="w-full outline-none"
-                          style={{
-                            fontFamily: 'Jost, sans-serif',
-                            fontWeight: 300,
-                            fontSize: '0.88rem',
-                            color: 'var(--gray-900)',
-                            backgroundColor: 'var(--gray-50)',
-                            border: '1px solid var(--gray-200)',
-                            padding: '11px 14px',
-                          }}
-                        />
-                        {errors.city && (
-                          <p style={{ fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', color: '#DC2626', marginTop: '4px' }}>
-                            {errors.city.message}
-                          </p>
-                        )}
-                      </div>
-                      <div>
-                        <label
-                          className="block mb-2"
-                          style={{
-                            fontFamily: 'Jost, sans-serif',
-                            fontSize: '0.68rem',
-                            fontWeight: 500,
-                            letterSpacing: '0.15em',
-                            textTransform: 'uppercase',
-                            color: 'var(--gray-600)',
-                          }}
-                        >
-                          State / Province
-                        </label>
-                        <input
-                          {...register('state')}
-                          placeholder="NY"
-                          className="w-full outline-none"
-                          style={{
-                            fontFamily: 'Jost, sans-serif',
-                            fontWeight: 300,
-                            fontSize: '0.88rem',
-                            color: 'var(--gray-900)',
-                            backgroundColor: 'var(--gray-50)',
-                            border: '1px solid var(--gray-200)',
-                            padding: '11px 14px',
-                          }}
-                        />
-                        {errors.state && (
-                          <p style={{ fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', color: '#DC2626', marginTop: '4px' }}>
-                            {errors.state.message}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Postal + Country */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label
-                          className="block mb-2"
-                          style={{
-                            fontFamily: 'Jost, sans-serif',
-                            fontSize: '0.68rem',
-                            fontWeight: 500,
-                            letterSpacing: '0.15em',
-                            textTransform: 'uppercase',
-                            color: 'var(--gray-600)',
-                          }}
-                        >
-                          Postal Code
-                        </label>
-                        <input
-                          {...register('postal_code')}
-                          placeholder="10001"
-                          className="w-full outline-none"
-                          style={{
-                            fontFamily: 'Jost, sans-serif',
-                            fontWeight: 300,
-                            fontSize: '0.88rem',
-                            color: 'var(--gray-900)',
-                            backgroundColor: 'var(--gray-50)',
-                            border: '1px solid var(--gray-200)',
-                            padding: '11px 14px',
-                          }}
-                        />
-                        {errors.postal_code && (
-                          <p style={{ fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', color: '#DC2626', marginTop: '4px' }}>
-                            {errors.postal_code.message}
-                          </p>
-                        )}
-                      </div>
-                      <div>
-                        <label
-                          className="block mb-2"
-                          style={{
-                            fontFamily: 'Jost, sans-serif',
-                            fontSize: '0.68rem',
-                            fontWeight: 500,
-                            letterSpacing: '0.15em',
-                            textTransform: 'uppercase',
-                            color: 'var(--gray-600)',
-                          }}
-                        >
-                          Country
-                        </label>
-                        <input
-                          {...register('country')}
-                          placeholder="United States"
-                          className="w-full outline-none"
-                          style={{
-                            fontFamily: 'Jost, sans-serif',
-                            fontWeight: 300,
-                            fontSize: '0.88rem',
-                            color: 'var(--gray-900)',
-                            backgroundColor: 'var(--gray-50)',
-                            border: '1px solid var(--gray-200)',
-                            padding: '11px 14px',
-                          }}
-                        />
-                        {errors.country && (
-                          <p style={{ fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', color: '#DC2626', marginTop: '4px' }}>
-                            {errors.country.message}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Continue to Payment */}
-                    <button
-                      onClick={handleSubmit(onSubmitAddress)}
-                      disabled={isLoading}
-                      className="w-full flex items-center justify-center gap-3 transition-opacity hover:opacity-80 disabled:opacity-40"
-                      style={{
-                        backgroundColor: 'var(--navy)',
-                        color: 'var(--cream)',
-                        fontFamily: 'Jost, sans-serif',
-                        fontSize: '0.7rem',
-                        fontWeight: 500,
-                        letterSpacing: '0.2em',
-                        textTransform: 'uppercase',
-                        padding: '15px',
-                        marginTop: '8px',
-                      }}
-                    >
-                      {isLoading ? 'Preparing payment…' : 'Continue to Payment'}
-                    </button>
-                  </div>
+              <div className="checkout-fields">
+                <Field label="Full name" registration={register('full_name')} error={errors.full_name?.message} placeholder="Jane Doe" autoComplete="name" />
+                <Field label="Email" registration={register('email')} error={errors.email?.message} type="email" placeholder="you@example.com" autoComplete="email" />
+                <div className="checkout-field--wide">
+                  <Field label="Street address" registration={register('line1')} error={errors.line1?.message} placeholder="123 Main Street" autoComplete="address-line1" />
                 </div>
-              </>
-            ) : (
-              <>
-                {/* Payment Form */}
-                <p className="eyebrow mb-6">Payment Details</p>
-                <Elements
-                  stripe={stripePromise}
-                  options={{
-                    clientSecret,
-                    appearance: {
-                      theme: 'stripe',
-                      variables: {
-                        colorPrimary: '#0C1322',
-                        colorBackground: '#FAFAF7',
-                        fontFamily: 'Jost, sans-serif',
-                        borderRadius: '0px',
-                        colorText: '#1A1A18',
-                      },
+                <div className="checkout-field--wide">
+                  <Field label="Apartment, suite, etc. (optional)" registration={register('line2')} placeholder="Apt 4B" autoComplete="address-line2" />
+                </div>
+                <Field label="City" registration={register('city')} error={errors.city?.message} placeholder="New York" autoComplete="address-level2" />
+                <Field label="State / Province" registration={register('state')} error={errors.state?.message} placeholder="NY" autoComplete="address-level1" />
+                <Field label="Postal code" registration={register('postal_code')} error={errors.postal_code?.message} placeholder="10001" autoComplete="postal-code" />
+                <Field label="Country" registration={register('country')} error={errors.country?.message} placeholder="United States" autoComplete="country-name" />
+              </div>
+
+              <button onClick={handleSubmit(onSubmitAddress)} disabled={isLoading} className="checkout-submit">
+                {isLoading ? 'Preparing payment…' : 'Continue to payment'}
+              </button>
+            </>
+          ) : (
+            <>
+              <StepLabel title="Payment details" step="002" />
+              <Elements
+                stripe={stripePromise}
+                options={{
+                  clientSecret,
+                  appearance: {
+                    theme: 'stripe',
+                    variables: {
+                      colorPrimary: '#d11f24',
+                      colorBackground: '#ffffff',
+                      fontFamily: '"Helvetica Neue", Arial, sans-serif',
+                      borderRadius: '0px',
+                      colorText: '#111111',
                     },
-                  }}
-                >
-                  <CheckoutForm
-                    total={total}
-                    onSuccess={handleOrderSuccess}
-                  />
-                </Elements>
-
-                {/* Back button */}
-                <button
-                  onClick={() => setClientSecret(null)}
-                  className="mt-4 transition-opacity hover:opacity-50"
-                  style={{
-                    fontFamily: 'Jost, sans-serif',
-                    fontSize: '0.75rem',
-                    fontWeight: 300,
-                    color: 'var(--gray-400)',
-                    letterSpacing: '0.05em',
-                  }}
-                >
-                  Back to shipping
-                </button>
-              </>
-            )}
-          </div>
-
-          {/* ── Right — Order Summary ── */}
-          <div className="checkout-summary">
-            <p className="eyebrow mb-6">Order Summary</p>
-
-            {/* Items */}
-            <div
-              className="space-y-4 mb-6"
-              style={{ borderBottom: '1px solid var(--gray-100)', paddingBottom: '1.5rem' }}
-            >
-              {items.map(item => (
-                <div key={item.id} className="flex items-center gap-4">
-                  <div
-                    className="relative shrink-0"
-                    style={{
-                      width: '56px',
-                      height: '70px',
-                      backgroundColor: 'var(--gray-50)',
-                    }}
-                  >
-                    {item.product.images?.[0] && (
-                      <Image
-                        src={item.product.images[0]}
-                        alt={item.product.name}
-                        fill
-                        sizes="56px"
-                        style={{ objectFit: 'cover' }}
-                      />
-                    )}
-                    <span
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 flex items-center justify-center text-white"
-                      style={{
-                        backgroundColor: 'var(--navy)',
-                        fontFamily: 'Jost, sans-serif',
-                        fontSize: '0.6rem',
-                        fontWeight: 500,
-                      }}
-                    >
-                      {item.quantity}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className="line-clamp-1"
-                      style={{
-                        fontFamily: 'Playfair Display, serif',
-                        fontWeight: 400,
-                        fontSize: '0.95rem',
-                        color: 'var(--navy)',
-                      }}
-                    >
-                      {item.product.name}
-                    </p>
-                    {item.variant && (
-                      <p style={{ fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', fontWeight: 300, color: 'var(--gray-400)' }}>
-                        {item.variant.name}: {item.variant.value}
-                      </p>
-                    )}
-                  </div>
-                  <p
-                    style={{
-                      fontFamily: 'Jost, sans-serif',
-                      fontWeight: 400,
-                      fontSize: '0.9rem',
-                      color: 'var(--navy)',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {formatPrice(
-                      (item.product.price + (item.variant?.price_modifier ?? 0)) * item.quantity
-                    )}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            {/* Totals */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span style={{ fontFamily: 'Jost, sans-serif', fontSize: '0.82rem', fontWeight: 300, color: 'var(--gray-400)' }}>
-                  Subtotal
-                </span>
-                <span style={{ fontFamily: 'Jost, sans-serif', fontSize: '0.82rem', fontWeight: 400, color: 'var(--navy)' }}>
-                  {formatPrice(totalPrice())}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span style={{ fontFamily: 'Jost, sans-serif', fontSize: '0.82rem', fontWeight: 300, color: 'var(--gray-400)' }}>
-                  Shipping
-                </span>
-                <span style={{ fontFamily: 'Jost, sans-serif', fontSize: '0.82rem', fontWeight: 300, color: 'var(--gray-400)' }}>
-                  {totalPrice() >= 15000 ? 'Free' : formatPrice(995)}
-                </span>
-              </div>
-              <div className="gold-divider my-3" />
-              <div className="flex items-center justify-between">
-                <span style={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--navy)' }}>
-                  Total
-                </span>
-                <span style={{ fontFamily: 'Playfair Display, serif', fontWeight: 500, fontSize: '1.3rem', color: 'var(--navy)' }}>
-                  {formatPrice(totalPrice() >= 15000 ? totalPrice() : totalPrice() + 995)}
-                </span>
-              </div>
-            </div>
-
-            {/* Trust badges */}
-            <div
-              className="checkout-notes"
-            >
-              {[
-                '256-bit SSL encrypted checkout',
-                'Free returns within 30 days',
-                'Authenticity guaranteed',
-              ].map(item => (
-                <p
-                  key={item}
-                  style={{
-                    fontFamily: 'Jost, sans-serif',
-                    fontSize: '0.78rem',
-                    fontWeight: 300,
-                    color: 'var(--gray-600)',
-                    letterSpacing: '0.02em',
-                  }}
-                >
-                  {item}
-                </p>
-              ))}
-            </div>
-          </div>
+                  },
+                }}
+              >
+                <CheckoutForm total={total} onSuccess={handleOrderSuccess} />
+              </Elements>
+              <button onClick={() => setClientSecret(null)} className="checkout-back">Back to shipping</button>
+            </>
+          )}
         </div>
+
+        <aside className="checkout-summary">
+          <StepLabel title="Your order" step="003" />
+
+          <div className="checkout-items">
+            {items.map(item => (
+              <div className="checkout-item" key={item.id}>
+                <div className="checkout-item__image">
+                  {item.product.images?.[0] && <Image src={item.product.images[0]} alt={item.product.name} fill sizes="72px" />}
+                  <span>{item.quantity}</span>
+                </div>
+                <div className="checkout-item__name">
+                  <p>{item.product.name}</p>
+                  {item.variant && <small>{item.variant.name}: {item.variant.value}</small>}
+                </div>
+                <p>{formatPrice((item.product.price + (item.variant?.price_modifier ?? 0)) * item.quantity)}</p>
+              </div>
+            ))}
+          </div>
+
+          <dl className="checkout-totals">
+            <div><dt>Subtotal</dt><dd>{formatPrice(totalPrice())}</dd></div>
+            <div><dt>Shipping</dt><dd>{shipping === 0 ? 'Free' : formatPrice(shipping)}</dd></div>
+            <div className="checkout-totals__grand"><dt>Total</dt><dd>{formatPrice(totalPrice() + shipping)}</dd></div>
+          </dl>
+
+          <ul className="checkout-notes-list">
+            <li>256-bit SSL encrypted checkout</li>
+            <li>Free returns within 30 days</li>
+            <li>Authenticity guaranteed</li>
+          </ul>
+        </aside>
       </div>
     </div>
   )

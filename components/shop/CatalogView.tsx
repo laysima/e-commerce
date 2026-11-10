@@ -1,6 +1,6 @@
-import Image from 'next/image'
 import Link from 'next/link'
-import { formatPrice } from '@/lib/utils'
+import PageBand from '@/components/shop/PageBand'
+import ProductCard from '@/components/shop/ProductCard'
 import type { Category, Product } from '@/types'
 
 type CatalogViewProps = {
@@ -20,6 +20,15 @@ const sortOptions = [
   { label: 'Price, low to high', value: 'price_asc' },
   { label: 'Price, high to low', value: 'price_desc' },
 ]
+
+const departmentCards: Record<string, { image: string; color: string }> = {
+  'womens-clothing': { image: '/looks/look-12.webp', color: '#f7c23c' },
+  'mens-clothing': { image: '/looks/look-09.webp', color: '#e8e3d7' },
+  sneakers: { image: '/looks/look-14.webp', color: '#ff9c86' },
+  'formal-shoes': { image: '/looks/look-07.webp', color: '#f7c23c' },
+  accessories: { image: '/looks/look-13.webp', color: '#e8e3d7' },
+}
+const defaultCard = { image: '/looks/look-04.webp', color: '#f7c23c' }
 
 export default function CatalogView({
   eyebrow,
@@ -44,34 +53,31 @@ export default function CatalogView({
   }
 
   return (
-    <div className="catalog-page">
-      <header className="catalog-hero">
-        <div>
-          <p className="section-index">{eyebrow}</p>
-          <h1>{title}</h1>
+    <div className="catalog">
+      <PageBand title={title} card={(activeCategorySlug && departmentCards[activeCategorySlug]) || defaultCard}>
+        <div className="page-band__meta">
+          <p>{eyebrow}</p>
+          <span>{products.length} {products.length === 1 ? 'piece' : 'pieces'}</span>
         </div>
-        <div className="catalog-hero__aside">
-          {description && <p>{description}</p>}
-          <span>{products.length} {products.length === 1 ? 'piece' : 'pieces'} to make your own</span>
-        </div>
-      </header>
+        {description && <p className="page-band__lead">{description}</p>}
+      </PageBand>
 
-      <div className="catalog-controls">
-        <div className="catalog-controls__group">
-          <span>Department</span>
-          <Link href="/products" className={!activeCategorySlug ? 'is-active' : ''}>All</Link>
-          {categories.map(category => (
-            <Link
-              key={category.id}
-              href={categoryRoutes ? `/categories/${category.slug}` : `/products?category=${category.slug}`}
-              className={activeCategorySlug === category.slug ? 'is-active' : ''}
-            >
-              {category.name}
-            </Link>
-          ))}
-        </div>
-        <div className="catalog-controls__group catalog-controls__group--sort">
-          <span>Order</span>
+      <nav className="catalog-tabs" aria-label="Departments">
+        <Link href="/products" className={!activeCategorySlug ? 'is-active' : ''}>All</Link>
+        {categories.map(category => (
+          <Link
+            key={category.id}
+            href={categoryRoutes ? `/categories/${category.slug}` : `/products?category=${category.slug}`}
+            className={activeCategorySlug === category.slug ? 'is-active' : ''}
+          >
+            {category.name}
+          </Link>
+        ))}
+      </nav>
+
+      <div className="catalog-sort">
+        <span>Sort by</span>
+        <div>
           {sortOptions.map(option => (
             <Link href={sortHref(option.value)} className={sort === option.value ? 'is-active' : ''} key={option.value}>
               {option.label}
@@ -81,36 +87,14 @@ export default function CatalogView({
       </div>
 
       {products.length ? (
-        <div className="catalog-grid">
-          {products.map(product => (
-            <Link href={`/products/${product.slug}`} className="catalog-product" key={product.id}>
-              <div className="catalog-product__media">
-                {product.images?.[0] ? (
-                  <Image src={product.images[0]} alt={product.name} fill sizes="(max-width: 700px) 45vw, 31vw" />
-                ) : (
-                  <span>Image forthcoming</span>
-                )}
-                {product.images?.[1] && <Image src={product.images[1]} alt="" fill sizes="(max-width: 700px) 45vw, 31vw" className="catalog-product__alternate" />}
-                {product.compare_at_price && <em>Reduced</em>}
-              </div>
-              <div className="catalog-product__info">
-                <div>
-                  <span>{(product.category as Category | null)?.name ?? 'Cressida'}</span>
-                  <h2>{product.name}</h2>
-                </div>
-                <div className="catalog-product__price">
-                  <p>{formatPrice(product.price)}</p>
-                  {product.compare_at_price && <s>{formatPrice(product.compare_at_price)}</s>}
-                </div>
-              </div>
-            </Link>
-          ))}
+        <div className="catalog-list">
+          {products.map(product => <ProductCard product={product} key={product.id} />)}
         </div>
       ) : (
-        <div className="catalog-empty">
+        <div className="catalog-none">
           <p>No pieces match this edit.</p>
           <span>Try another department or return to the full collection.</span>
-          <Link href="/products" className="editorial-link editorial-link--dark">View all pieces</Link>
+          <Link href="/products" className="underline-link">View all pieces</Link>
         </div>
       )}
     </div>

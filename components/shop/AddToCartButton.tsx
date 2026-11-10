@@ -2,20 +2,19 @@
 
 import { useState } from 'react'
 import { useCartStore } from '@/store/cartStore'
-import type { Product } from '@/types'
+import type { Product, ProductVariant } from '@/types'
 
-export default function AddToCartButton({ product }: { product: Product }) {
+export default function AddToCartButton({ product, variant }: { product: Product; variant?: ProductVariant }) {
   const [added, setAdded] = useState(false)
   const addItem = useCartStore(state => state.addItem)
+  const outOfStock = product.inventory_count === 0 || variant?.inventory_count === 0
 
   const handleAdd = () => {
-    if (product.inventory_count === 0) return
-    addItem(product)
+    if (outOfStock) return
+    addItem(product, variant)
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
   }
-
-  const outOfStock = product.inventory_count === 0
 
   return (
     <button

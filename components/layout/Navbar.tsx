@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { Heart, Menu, Search, ShoppingBag, User } from 'lucide-react'
 import { useCartStore } from '@/store/cartStore'
 import { useWishlistStore } from '@/store/wishlistStore'
 import { createClient } from '@/lib/supabase/client'
@@ -32,6 +33,8 @@ export default function Navbar() {
   const totalItems = useCartStore(state => state.totalItems())
   const wishlistItems = useWishlistStore(state => state.items)
   const openCart = useCartStore(state => state.openCart)
+  const savedCount = mounted ? wishlistItems.length : 0
+  const bagCount = !mounted ? 0 : totalItems > 99 ? '99+' : totalItems
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 12)
@@ -118,25 +121,29 @@ export default function Navbar() {
   return (
     <header className={`site-header ${isScrolled ? 'site-header--scrolled' : ''}`}>
       <div className="site-header__bar">
-        <nav className="site-header__nav site-header__nav--left" aria-label="Primary navigation">
-          <Link href="/products">Shop all</Link>
+        <button type="button" className="site-header__burger" onClick={() => setIsMenuOpen(true)} aria-label="Open menu">
+          <Menu aria-hidden="true" size={24} strokeWidth={1.25} />
+        </button>
+
+        <Link href="/" className="site-wordmark" aria-label="Cressida home">Cressida</Link>
+
+        <nav className="site-header__nav" aria-label="Primary navigation">
+          <Link href="/">Home</Link>
+          <Link href="/products">Products</Link>
           <Link href="/categories/womens-clothing">Women</Link>
           <Link href="/categories/mens-clothing">Men</Link>
         </nav>
 
-        <Link href="/" className="site-wordmark" aria-label="Cressida home">cressida<span>.</span></Link>
-
-        <div className="site-header__nav site-header__nav--right">
-          <button type="button" onClick={() => setIsSearchOpen(true)}>Search</button>
-          <Link href="/wishlist">
-            Saved{mounted && wishlistItems.length > 0 ? ` (${wishlistItems.length})` : ''}
-          </Link>
-          <button type="button" onClick={openCart}>
-            Bag{mounted && totalItems > 0 ? ` (${totalItems > 99 ? '99+' : totalItems})` : ''}
+        <div className="site-header__actions">
+          <button type="button" className="site-header__icon" onClick={() => setIsSearchOpen(true)} aria-label="Search">
+            <Search aria-hidden="true" size={22} strokeWidth={1.25} />
           </button>
-          <div className="account-menu">
-            <button type="button" onClick={() => setIsUserMenuOpen(value => !value)} aria-expanded={isUserMenuOpen}>
-              Account
+          <Link href="/wishlist" className="site-header__icon site-header__icon--desktop" aria-label={`Saved, ${savedCount} items`}>
+            <Heart aria-hidden="true" size={22} strokeWidth={1.25} />
+          </Link>
+          <div className="account-menu site-header__icon--desktop">
+            <button type="button" className="site-header__icon" onClick={() => setIsUserMenuOpen(value => !value)} aria-expanded={isUserMenuOpen} aria-label="Account">
+              <User aria-hidden="true" size={22} strokeWidth={1.25} />
             </button>
             {isUserMenuOpen && (
               <div className="account-menu__panel">
@@ -160,12 +167,10 @@ export default function Navbar() {
               </div>
             )}
           </div>
-        </div>
-
-        <div className="site-header__mobile-actions">
-          <button type="button" onClick={() => setIsSearchOpen(true)}>Search</button>
-          <button type="button" onClick={openCart}>Bag{mounted && totalItems > 0 ? ` (${totalItems})` : ''}</button>
-          <button type="button" onClick={() => setIsMenuOpen(true)}>Menu</button>
+          <button type="button" className="site-header__bag" onClick={openCart} aria-label={`Bag, ${bagCount} items`}>
+            <ShoppingBag aria-hidden="true" size={22} strokeWidth={1.25} />
+            {mounted && totalItems > 0 && <span>{bagCount}</span>}
+          </button>
         </div>
       </div>
 
@@ -199,7 +204,7 @@ export default function Navbar() {
       {isMenuOpen && (
         <dialog ref={menuDialog} className="site-menu" aria-label="Main menu" onCancel={() => setIsMenuOpen(false)}>
           <div className="site-menu__top">
-            <Link href="/" onClick={() => setIsMenuOpen(false)} className="site-wordmark">cressida<span>.</span></Link>
+            <Link href="/" onClick={() => setIsMenuOpen(false)} className="site-wordmark">Cressida</Link>
             <button type="button" onClick={() => setIsMenuOpen(false)}>Close</button>
           </div>
           <nav aria-label="Mobile navigation">

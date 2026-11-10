@@ -1,6 +1,6 @@
 # Fonts
 
-Manrope and Bodoni Moda are self hosted under the SIL Open Font License. Their full licenses are in `public/fonts/Manrope-OFL.txt` and `public/fonts/BodoniModa-OFL.txt`.
+Archivo, Manrope and Bodoni Moda are self hosted under the SIL Open Font License. Their full licenses are in `public/fonts/Archivo-OFL.txt`, `public/fonts/Manrope-OFL.txt` and `public/fonts/BodoniModa-OFL.txt`.
 
 # Three.js
 
